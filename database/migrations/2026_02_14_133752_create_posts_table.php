@@ -29,8 +29,8 @@ return new class extends Migration
             $table->decimal('end_position_lng', 11, 8);
             $table->string('start_location_details');
             $table->string('end_location_details');
-            $table->unsignedBigInteger('max_price');
-            $table->unsignedBigInteger('min_price');
+            $table->unsignedBigInteger('max_price')->nullable();
+            $table->unsignedBigInteger('min_price')->nullable();
             $table->date('last_date');
             $table->timestamps();
         });

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('type');
             $table->longText('description');
-            $table->unsignedInteger('vehicle_coefficient');
+            $table->decimal('vehicle_coefficient',5,2);
             $table->decimal('avg_fuel_consumption',5,2);
             $table->timestamps();
         });

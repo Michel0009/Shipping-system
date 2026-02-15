@@ -33,7 +33,7 @@ return new class extends Migration
             $table->decimal('end_position_lat', 10, 8);
             $table->decimal('end_position_lng', 11, 8);
             $table->unsignedBigInteger('price');
-            $table->string('pin',6)->nullable();
+            $table->string('pin',6);
             $table->string('status');
             $table->boolean('success');
             $table->timestamps();

@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('drivers', function (Blueprint $table) {
             $table->id();
-            $table->id();
             $table->foreignId('user_id')
                 ->constrained('users')
                 ->cascadeOnDelete()
@@ -36,6 +35,7 @@ return new class extends Migration
             $table->string('personal_picture');
             $table->string('nationality');
             $table->unsignedInteger('continuous_successful_shipments');
+            $table->boolean('availability')->default(false);
             $table->timestamps();
         });
     }

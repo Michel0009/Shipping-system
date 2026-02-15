@@ -21,7 +21,7 @@ return new class extends Migration
                 ->constrained('drivers')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->unsignedBigInteger('shipment_number');
+            $table->unsignedBigInteger('shipment_number')->unique();
             $table->decimal('weight', 5, 2);
             $table->decimal('height', 5, 2);
             $table->decimal('width', 5, 2);
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->decimal('end_position_lat', 10, 8);
             $table->decimal('end_position_lng', 11, 8);
             $table->unsignedBigInteger('price');
-            $table->string('pin',6)->nullable();
+            $table->string('pin',6);
             $table->string('status');
             $table->boolean('success');
             $table->timestamps();

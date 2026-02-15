@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string(column: 'name');
             $table->longText(column: 'text');
             $table->unsignedInteger('continuous_successful_shipments_condition');
-            $table->unsignedTinyInteger('successful_shipments_percentage_condition');
+            $table->decimal('successful_shipments_percentage_condition',3,2);
             $table->unsignedInteger('continuous_failed_shipments_condition');
             $table->timestamps();
         });

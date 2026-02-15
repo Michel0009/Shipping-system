@@ -21,7 +21,7 @@ return new class extends Migration
                 ->constrained('drivers')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->unsignedBigInteger('shipment_number');
+            $table->unsignedBigInteger('shipment_number')->unique();
             $table->decimal('weight', 5, 2);
             $table->decimal('height', 5, 2);
             $table->decimal('width', 5, 2);

@@ -34,7 +34,7 @@ return new class extends Migration
             $table->string('additional_phone_number')->nullable();
             $table->string('personal_picture');
             $table->string('nationality');
-            $table->unsignedInteger('continuous_successful_shipments');
+            $table->unsignedInteger('continuous_successful_shipments')->default(0);
             $table->boolean('availability')->default(false);
             $table->timestamps();
         });

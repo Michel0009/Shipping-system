@@ -36,9 +36,9 @@ class AuthController extends Controller
         ]);
     }
 
-    public function verification(AuthFormRequest $request, string $email): JsonResponse
+    public function verification(AuthFormRequest $request): JsonResponse
     {
-        $success = $this->authService->verification($request->validated(), $email);
+        $success = $this->authService->verification($request->validated());
         if (!$success) {
             return response()->json([
                 'message' => 'رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى'
@@ -47,9 +47,22 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'تم التحقق من بريدك الإلكتروني بنجاح',
             'token' => $success['token'] ?? null ,
-            'reset_token' => $success['reset_token'] ?? null
         ], 200);
     }
+
+    // public function new_password_verification(AuthFormRequest $request): JsonResponse
+    // {
+    //     $success = $this->authService->new_password_verification($request->validated());
+    //     if (!$success) {
+    //         return response()->json([
+    //             'message' => 'رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى'
+    //         ], 400);
+    //     }
+    //     return response()->json([
+    //         'message' => 'تم التحقق من بريدك الإلكتروني بنجاح',
+    //         'reset_token' => $success['reset_token'] ?? null
+    //     ], 200);
+    // }
 
     public function reset_password(AuthFormRequest $request): JsonResponse
     {
@@ -71,6 +84,9 @@ class AuthController extends Controller
 
         if ($result === 'unverified') {
             return response()->json(['message' => 'يجب عليك تأكيد بريدك الإلكتروني أولاً'],202);
+        }
+        if ($result === 'banned') {
+            return response()->json(['message' => 'تم حظر هذا الحساب، يرجى التواصل مع الإدارة'],403);
         }
         if (!$result) {
             return response()->json(['message' => 

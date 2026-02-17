@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'user_Register']);
 Route::post('/sendEmail', [AuthController::class, 'send_email']);
-Route::post('/verification', [AuthController::class, 'verification']);
+Route::post('/emailVerification', [AuthController::class, 'verification']);
+Route::post('/newPasswordVerification', [AuthController::class, 'new_password_verification']);
 Route::post('/reSetPassword', [AuthController::class, 'reset_password']);
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');

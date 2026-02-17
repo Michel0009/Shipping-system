@@ -96,35 +96,51 @@ class AuthService
   }
 
 
-  public function verification(array $request, string $email)
+  public function verification(array $request)
   {
-    $user = $this->userRepository->findByEmail($email);
+    $user = $this->userRepository->findByEmail($request['email']);
     if (!$user) return false;
 
     $cache_value = Cache::get($user->id);
 
     if ($cache_value && ($request['verification_code'] == $cache_value)) {
 
-      $first_time = false;
-      if($user->email_verified_at == null){
-        $first_time = true;
-      }
       $user->email_verified_at = now();
       $this->userRepository->save($user);
 
-      if($first_time){
-        $user['token'] = $user->createToken('AccessToken')->plainTextToken;
-        return ['token' => $user['token']];
-      }
+      if($user['number_of_logins'] == 0){
+        $token = $user->createToken('AccessToken')->plainTextToken;
+        $user->number_of_logins = $user->number_of_logins + 1;
+        $this->userRepository->save($user);
 
-      $resetToken = Str::random(64);
-      Cache::put("reset_token_".$user->id, $resetToken, now()->addMinutes(10));
-      
-      return ['reset_token' => $resetToken];
+        return ['token' => $token];
+      }
+      return true;
     
     }
     return false;
   }
+
+  // public function new_password_verification(array $request)
+  // {
+  //   $user = $this->userRepository->findByEmail($request['email']);
+  //   if (!$user) return false;
+
+  //   $cache_value = Cache::get($user->id);
+
+  //   if ($cache_value && ($request['verification_code'] == $cache_value)) {
+
+  //     $user->email_verified_at = now();
+  //     $this->userRepository->save($user);
+
+  //     $resetToken = Str::random(64);
+  //     Cache::put("reset_token_".$user->id, $resetToken, now()->addMinutes(10));
+      
+  //     return ['reset_token' => $resetToken];
+    
+  //   }
+  //   return false;
+  // }
 
 
   public function reset_password(array $request)
@@ -155,18 +171,24 @@ class AuthService
       if ($user['email_verified_at'] == null) {
         return 'unverified';
       }
-      if ($user['role_id'] == 4 && $user['number_of_logins'] == 0) {
-        return 'first time';
+      if ($user['status'] != 0) {
+        return 'banned';
       }
 
-      $user['token'] = $user->createToken('AccessToken')->plainTextToken;
+      $first_login_driver = false;
+      if ($user['role_id'] == 4 && $user['number_of_logins'] == 0) {
+        $first_login_driver = true;
+      } 
+
+      $token = $user->createToken('AccessToken')->plainTextToken;
       $user->number_of_logins = $user->number_of_logins + 1;
       $this->userRepository->save($user);
 
       $responseData = [
         'message' => 'مرحباً بك',
-        'token' => $user['token'],
+        'token' => $token,
         'role' => $user->role->name,
+        'first_login_for_driver' => $first_login_driver,
       ];
 
       return $responseData;

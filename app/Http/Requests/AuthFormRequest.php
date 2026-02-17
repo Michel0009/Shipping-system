@@ -51,6 +51,10 @@ class AuthFormRequest extends FormRequest
             'email' => 'required|email',
             'verification_code' => 'required|digits:6',
         ],
+        'new_password_verification' => [
+            'email' => 'required|email',
+            'verification_code' => 'required|digits:6',
+        ],
         'reset_password' => [
             'email' => 'required|email',
             'reset_token' => 'required|string',
@@ -112,6 +116,13 @@ class AuthFormRequest extends FormRequest
             ],
 
             'verification' => [
+                'email.required' => 'البريد الإلكتروني مطلوب',
+                'email.email' => 'صيغة البريد الإلكتروني غير صحيحة',
+                'verification_code.required' => 'رمز التحقق مطلوب',
+                'verification_code.digits' => 'رمز التحقق يجب أن يتكون من 6 أرقام',
+            ],
+
+            'new_password_verification' => [
                 'email.required' => 'البريد الإلكتروني مطلوب',
                 'email.email' => 'صيغة البريد الإلكتروني غير صحيحة',
                 'verification_code.required' => 'رمز التحقق مطلوب',

@@ -21,7 +21,7 @@ class UserSeeder extends Seeder
           'first_name' => 'admin',
           'last_name' => 'admin',
           'location' => 'Damascus',
-          'user_number' => '33221100',
+          'user_number' => '00000000',
           'email_verified_at' => now(),
           'role_id' => '1',
         ]);

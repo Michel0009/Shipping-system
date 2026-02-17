@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Jobs\SendEmailJob;
 use App\Models\User;
 use App\Repositories\CarRepository;
 use App\Repositories\DriverRepository;
 use App\Repositories\UserRepository;
 use Exception;
 use finfo;
-use Hashids\Hashids;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +17,6 @@ use Illuminate\Support\Str;
 
 class UserService
 {
-    protected $hashids;
     protected $userRepository;
     protected $driverRepository;
     protected $carRepository;
@@ -27,7 +26,6 @@ class UserService
         $this->userRepository = $userRepository;
         $this->driverRepository = $driverRepository;
         $this->carRepository = $carRepository;
-        $this->hashids = new Hashids('secure_salt_2026_2_16', 8, '1234567890');
     }
 
     public function create_driver(array $request)
@@ -39,24 +37,18 @@ class UserService
                 $driver = $this->create_driver_for_driver($request, $user->id);
                 $car = $this->create_car_for_driver($request, $driver->id);
                 $this->create_files_for_driver($request, $car->id, $driver->id);
-                return  [
-                    'status'   => true,
-                    'message'  => 'تم تسجيل السائق بنجاح',
-                ];;
-            } catch (QueryException $e) {
-                $this->rollbackFiles();
-                if ($e->getCode() == 23000 && str_contains($e->getMessage(), 'user_number')) {
-                    return $this->create_driver($request);
-                }
+                $this->driverRepository->attach_governorates($driver,$request['governorate_ids']);
+                $this->send_email($user->email,$plainPassword);
                 return [
-                    'status' => false,
-                    'message' => 'عذراً، تعذر حفظ البيانات حالياً. يرجى التأكد من البيانات والمحاولة مرة أخرى.'
+                    'status' => true,
+                    'message' => 'تم تسجيل السائق بنجاح',
+                    'code' => 201
                 ];
             } catch (Exception $e) {
                 $this->rollbackFiles();
-                return ['status' => false, 'message' => $e->getMessage()];
+                throw $e;
             }
-        }, 1);
+        }, 3);
     }
     private function rollbackFiles()
     {
@@ -68,11 +60,8 @@ class UserService
     }
     private function generate_user_number()
     {
-
-        $mtime = microtime();
-        $seed = str_replace([' ', '.'], '', $mtime);
-        $userNumber = $this->hashids->encode($seed);
-
+        $lastId = User::max('id');
+        $userNumber = strrev(str_pad($lastId, 8, '0', STR_PAD_LEFT));
         if (User::where('user_number', $userNumber)->exists()) {
             return $this->generate_user_number();
         }
@@ -94,7 +83,7 @@ class UserService
         ];
 
         if (!in_array($realMime, $allowedMime)) {
-            throw new Exception("نوع الملف الحقيقي غير مسموح لـ {$file->getClientOriginalName()}");
+            throw new Exception("نوع الملف الحقيقي غير مسموح لـ {$file->getClientOriginalName()}",422);
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
@@ -105,6 +94,56 @@ class UserService
         $this->uploadedFiles[] = $path;
 
         return $path;
+    }
+    private function send_email(string $email, string $plainPassword){
+        $user = $this->userRepository->findByEmail($email);
+        if (!$user) return;
+
+        $subject = 'مرحباً بك في نظام شحن البضائع - بيانات الدخول الخاصة بك';
+
+        $emailBody = '
+      <div style="direction: rtl; font-family: Tahoma, Arial, sans-serif; font-size:16px; background-color:#f4f6f9; padding:20px; text-align:right; max-width:750px; margin:auto; border-radius:10px;">
+
+          <div style="text-align:center; margin-bottom:20px;">
+              <h2 style="color:#2563eb;">نظام إدارة شحن البضائع</h2>
+          </div>
+
+          <p style="color:#1f2937; font-size:18px; margin-bottom:15px;">
+              مرحباً <strong>' . $user->first_name . '</strong>،
+          </p>
+
+          <p style="margin-bottom:20px; line-height:1.6;">
+              يسعدنا انضمامك إلينا في <strong>نظام إدارة شحن البضائع</strong>. تم إنشاء حسابك بنجاح، ويمكنك الآن البدء في استقبال وإدارة طلبات الشحن الخاصة بك.
+          </p>
+
+          <div style="background-color:#ffffff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;">
+              <p style="margin-top:0; font-weight:bold; color:#374151;">بيانات تسجيل الدخول:</p>
+              <p style="margin:10px 0;">البريد الإلكتروني: <span style="color:#2563eb; font-weight:bold;">' . $user->email . '</span></p>
+              <p style="margin:10px 0;">كلمة المرور المؤقتة:</p>
+              <div style="font-size:24px; font-weight:bold; text-align:center; color:#ffffff; background-color:#2563eb; padding:15px; border-radius:6px; margin:15px 0;">
+                  ' . $plainPassword . '
+              </div>
+          </div>
+
+          <p style="margin-bottom:20px; color:#ef4444; font-size:14px; font-weight:bold;">
+              ⚠️ ملاحظة أمنية: يرجى تسجيل الدخول وتغيير كلمة المرور هذه فوراً عند أول استخدام للحفاظ على أمان حسابك.
+          </p>
+
+          <p style="margin-top:20px; font-size:14px; color:#1f2937;">
+              بإمكانك الآن تحميل التطبيق وتسجيل الدخول لمباشرة العمل. إذا واجهت أي صعوبة، لا تتردد في التواصل مع فريق الدعم الفني.
+          </p>
+
+          <hr style="margin:25px 0; border: 0; border-top:1px solid #e5e7eb;">
+
+          <p style="font-size:14px; color:#6b7280; text-align:center;">
+              فريق نظام إدارة شحن البضائع<br>
+              نتمنى لك رحلات آمنة وموفقة.
+          </p>
+
+      </div>
+      ';
+
+        SendEmailJob::dispatch($user->email, $emailBody, $subject);
     }
     private function create_user_for_driver(array $request, $password)
     {

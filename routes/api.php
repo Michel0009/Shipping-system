@@ -1,20 +1,21 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Route::post('/register', [AuthController::class, 'user_Register']);
-// Route::get('/sendEmail/{email}', [AuthController::class, 'send_email']);
-// Route::post('/verification/{email}', [AuthController::class, 'verification']);
-// Route::post('/reSetPassword', [AuthController::class, 'reset_password']);
+Route::post('/register', [AuthController::class, 'user_Register']);
+Route::post('/sendEmail', [AuthController::class, 'send_email']);
+Route::post('/verification', [AuthController::class, 'verification']);
+Route::post('/reSetPassword', [AuthController::class, 'reset_password']);
 
-// Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/createDriver', [UserController::class, 'create_driver']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
-//   Route::get('/logout', [AuthController::class, 'logout']);
-  // Route::post('/Refresh', [AuthController::class, 'refresh']);
-  
+  Route::get('/logout', [AuthController::class, 'logout']);
+
   // Client Routes
   Route::middleware('role:client')->group(function () {
 
@@ -32,7 +33,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
   // Employee-Admin Routes
   Route::middleware('role:employee,admin')->group(function () {
-
   });
-  
+
 });

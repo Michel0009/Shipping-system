@@ -29,5 +29,7 @@ class DriverRepository
     {
         return $this->uncovicted_paper->create($data);
     }
-
+    public function attach_governorates($driver,array $governorateIds){
+        return $driver->governorates()->sync($governorateIds);
+    }
 }

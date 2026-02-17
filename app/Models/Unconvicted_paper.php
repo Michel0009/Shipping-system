@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Unconvicted_paper extends Model
 {
-    protected $fillable = ['driver_id', 'uncovicted_file'];
+    protected $fillable = ['driver_id', 'unconvicted_file'];
 
     public function driver()
     {

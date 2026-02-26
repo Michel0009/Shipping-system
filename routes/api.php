@@ -11,7 +11,6 @@ Route::post('/newPasswordVerification', [AuthController::class, 'new_password_ve
 Route::post('/reSetPassword', [AuthController::class, 'reset_password']);
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-Route::post('/createDriver', [UserController::class, 'create_driver']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -34,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
   // Employee-Admin Routes
   Route::middleware('role:employee,admin')->group(function () {
+        Route::post('/createDriver', [UserController::class, 'create_driver']);
   });
 
 });

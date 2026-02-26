@@ -50,7 +50,7 @@ class Driver extends Model
     }
     public function governorates()
     {
-        return $this->belongsToMany(Governorate::class);
+        return $this->belongsToMany(Governorate::class)->withTimestamps();
     }
     public function shipments()
     {

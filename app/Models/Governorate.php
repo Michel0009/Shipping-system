@@ -10,7 +10,7 @@ class Governorate extends Model
 
     public function drivers()
     {
-        return $this->belongsToMany(Driver::class);
+        return $this->belongsToMany(Driver::class)->withTimestamps();
     }
     public function shipments()
     {

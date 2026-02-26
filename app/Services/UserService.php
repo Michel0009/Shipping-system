@@ -20,7 +20,6 @@ class UserService
     protected $userRepository;
     protected $driverRepository;
     protected $carRepository;
-    protected array $uploadedFiles = [];
     public function __construct(UserRepository $userRepository, DriverRepository $driverRepository, CarRepository $carRepository)
     {
         $this->userRepository = $userRepository;
@@ -31,31 +30,34 @@ class UserService
     public function create_driver(array $request)
     {
         return DB::transaction(function () use ($request) {
+            $userId = null;
             try {
                 $plainPassword = Str::password(12, true, true, true, false);
                 $user = $this->create_user_for_driver($request, $plainPassword);
-                $driver = $this->create_driver_for_driver($request, $user->id);
+                $userId = $user->id;
+                $driver = $this->create_driver_for_driver($request, $userId);
                 $car = $this->create_car_for_driver($request, $driver->id);
-                $this->create_files_for_driver($request, $car->id, $driver->id);
-                $this->driverRepository->attach_governorates($driver,$request['governorate_ids']);
-                $this->send_email($user->email,$plainPassword);
+                $this->create_files_for_driver($request, $car->id, $driver->id, $userId);
+                $this->driverRepository->attach_governorates($driver, $request['governorate_ids']);
+                $this->send_email($user->email, $plainPassword);
                 return [
                     'status' => true,
                     'message' => 'تم تسجيل السائق بنجاح',
                     'code' => 201
                 ];
             } catch (Exception $e) {
-                $this->rollbackFiles();
+                if ($userId) {
+                    $this->rollbackFolder($userId);
+                }
                 throw $e;
             }
         }, 3);
     }
-    private function rollbackFiles()
+    private function rollbackFolder($userId)
     {
-        foreach ($this->uploadedFiles as $filePath) {
-            if (Storage::disk('local')->exists($filePath)) {
-                Storage::disk('local')->delete($filePath);
-            }
+        $directory = "users/{$userId}";
+        if (Storage::disk('local')->exists($directory)) {
+            Storage::disk('local')->deleteDirectory($directory);
         }
     }
     private function generate_user_number()
@@ -67,7 +69,7 @@ class UserService
         }
         return $userNumber;
     }
-    private function check_file($file, $id, $folder)
+    private function check_file($file, $userId)
     {
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $realMime = $finfo->file($file->getPathname());
@@ -83,19 +85,20 @@ class UserService
         ];
 
         if (!in_array($realMime, $allowedMime)) {
-            throw new Exception("نوع الملف الحقيقي غير مسموح لـ {$file->getClientOriginalName()}",422);
+            throw new Exception("نوع الملف الحقيقي غير مسموح لـ {$file->getClientOriginalName()}", 422);
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
         $newName = Str::uuid()->toString() . "." . $extension;
-        $path = "{$folder}/{$id}/{$newName}";
+
+        $path = "users/{$userId}/{$newName}";
 
         Storage::disk('local')->put($path, file_get_contents($file));
-        $this->uploadedFiles[] = $path;
 
         return $path;
     }
-    private function send_email(string $email, string $plainPassword){
+    private function send_email(string $email, string $plainPassword)
+    {
         $user = $this->userRepository->findByEmail($email);
         if (!$user) return;
 
@@ -181,12 +184,12 @@ class UserService
             $driverData['additional_phone_number'] = $request['additional_phone_number'];
         }
 
-        $filePath=$this->check_file($request['personal_picture'],$userId,'users');
+        $filePath = $this->check_file($request['personal_picture'], $userId);
 
         if (is_array($filePath)) {
             return $filePath;
         }
-        $driverData['personal_picture']=$filePath;
+        $driverData['personal_picture'] = $filePath;
         return $this->driverRepository->create($driverData);
     }
     private function create_car_for_driver(array $request, $driverId)
@@ -204,22 +207,22 @@ class UserService
         ];
         return $this->carRepository->create($carData);
     }
-    private function create_files_for_driver(array $request, $carId, $driverId)
+    private function create_files_for_driver(array $request, $carId, $driverId, $userId)
     {
-        $licensePath = $this->check_file($request['license_file'], $driverId, 'drivers');
+        $licensePath = $this->check_file($request['license_file'], $userId);
         $this->driverRepository->create_license([
             'driver_id'    => $driverId,
             'license_file' => $licensePath
         ]);
 
-        $unconvictedPath = $this->check_file($request['unconvicted_file'], $driverId, 'drivers');
+        $unconvictedPath = $this->check_file($request['unconvicted_file'], $userId);
         $this->driverRepository->create_unconvicted_paper([
             'driver_id'        => $driverId,
             'unconvicted_file' => $unconvictedPath
         ]);
 
         foreach ($request['car_papers'] as $paper) {
-            $filePath = $this->check_file($paper['car_file'], $carId, 'cars');
+            $filePath = $this->check_file($paper['car_file'], $userId);
             $this->carRepository->create_car_paper([
                 'car_id'   => $carId,
                 'type'     => $paper['type'],

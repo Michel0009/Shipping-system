@@ -23,7 +23,7 @@ class UserFormRequest extends FormRequest
     public function rules(): array
     {
         $noHtml = new NoHtml();
-        $fileLimit = 'max:5120';
+        $fileLimit = 'max:10240';
         return match ($this->route()->getActionMethod()) {
             'create_driver' => [
                 'first_name'   => ['required', 'string', 'max:255', $noHtml],
@@ -82,7 +82,7 @@ class UserFormRequest extends FormRequest
                 'in'       => '.القيمة المختارة لـ :attribute غير صالحة',
                 'exists'   => '.القيمة المختارة لـ :attribute غير موجودة',
                 'file'     => '.يجب رفع ملف في حقل :attribute',
-                'mimes'    => '.يجب أن يكون الملف بصيغة: :values',
+                'mimes'    => '.:values يجب أن يكون الملف بصيغة',
                 'integer'  => '.يجب أن يكون :attribute رقماً',
                 'min'      => '.يجب أن يكون :attribute على الأقل :min',
             ],

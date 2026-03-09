@@ -134,7 +134,7 @@ class AuthFormRequest extends FormRequest
                 'email.email' => 'صيغة البريد الإلكتروني غير صحيحة',
                 'reset_token.required' => 'رمز إعادة التعيين مطلوب',
                 'new_password.required' => 'كلمة المرور الجديدة مطلوبة',
-                'new_password.min' => 'كلمة المرور الجديدة يجب أن تحتوي على 8 أحرف على الأقل',
+                'new_password.*' => 'كلمة المرور يجب أن تحتوي على أحرف كبيرة وصغيرة وأرقام ورموز وألا تقل عن 8 أحرف',
             ],
 
             default => [],

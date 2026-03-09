@@ -50,19 +50,19 @@ class AuthController extends Controller
         ], 200);
     }
 
-    // public function new_password_verification(AuthFormRequest $request): JsonResponse
-    // {
-    //     $success = $this->authService->new_password_verification($request->validated());
-    //     if (!$success) {
-    //         return response()->json([
-    //             'message' => 'رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى'
-    //         ], 400);
-    //     }
-    //     return response()->json([
-    //         'message' => 'تم التحقق من بريدك الإلكتروني بنجاح',
-    //         'reset_token' => $success['reset_token'] ?? null
-    //     ], 200);
-    // }
+    public function new_password_verification(AuthFormRequest $request): JsonResponse
+    {
+        $success = $this->authService->new_password_verification($request->validated());
+        if (!$success) {
+            return response()->json([
+                'message' => 'رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى'
+            ], 400);
+        }
+        return response()->json([
+            'message' => 'تم التحقق من بريدك الإلكتروني بنجاح',
+            'reset_token' => $success['reset_token'] ?? null
+        ], 200);
+    }
 
     public function reset_password(AuthFormRequest $request): JsonResponse
     {

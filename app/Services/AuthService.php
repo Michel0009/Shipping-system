@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Jobs\SendEmailJob;
-use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +21,8 @@ class AuthService
 
   public function user_Register(array $request)
   {
-    $user_number = rand(10000000, 99999999);
+    // $user_number = rand(10000000, 99999999);
+    $user_number = app(\App\Services\UserService::class)->generate_user_number();
     
     $user = $this->userRepository->create([
       'first_name' => $request['first_name'],
@@ -121,26 +121,26 @@ class AuthService
     return false;
   }
 
-  // public function new_password_verification(array $request)
-  // {
-  //   $user = $this->userRepository->findByEmail($request['email']);
-  //   if (!$user) return false;
+  public function new_password_verification(array $request)
+  {
+    $user = $this->userRepository->findByEmail($request['email']);
+    if (!$user) return false;
 
-  //   $cache_value = Cache::get($user->id);
+    $cache_value = Cache::get($user->id);
 
-  //   if ($cache_value && ($request['verification_code'] == $cache_value)) {
+    if ($cache_value && ($request['verification_code'] == $cache_value)) {
 
-  //     $user->email_verified_at = now();
-  //     $this->userRepository->save($user);
+      $user->email_verified_at = now();
+      $this->userRepository->save($user);
 
-  //     $resetToken = Str::random(64);
-  //     Cache::put("reset_token_".$user->id, $resetToken, now()->addMinutes(10));
+      $resetToken = Str::random(64);
+      Cache::put("reset_token_".$user->id, $resetToken, now()->addMinutes(10));
       
-  //     return ['reset_token' => $resetToken];
+      return ['reset_token' => $resetToken];
     
-  //   }
-  //   return false;
-  // }
+    }
+    return false;
+  }
 
 
   public function reset_password(array $request)
@@ -157,6 +157,7 @@ class AuthService
     $this->userRepository->save($user);
 
     Cache::forget("reset_token_".$user->id);
+    $user->tokens()->delete();
     return true;
   }
 
@@ -168,7 +169,7 @@ class AuthService
 
     if ($user && Hash::check($request['password'], $user->password)) {
 
-      if ($user['email_verified_at'] == null) {
+      if ($user['role_id'] != 4 && $user['email_verified_at'] == null) {
         return 'unverified';
       }
       if ($user['status'] != 0) {

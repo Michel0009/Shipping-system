@@ -60,7 +60,7 @@ class UserService
             Storage::disk('local')->deleteDirectory($directory);
         }
     }
-    private function generate_user_number()
+    public function generate_user_number()
     {
         $lastId = User::max('id');
         $userNumber = strrev(str_pad($lastId, 8, '0', STR_PAD_LEFT));

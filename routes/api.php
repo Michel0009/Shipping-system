@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DriverController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,8 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 Route::middleware('auth:sanctum')->group(function () {
 
   Route::get('/logout', [AuthController::class, 'logout']);
+  Route::get('/governorates', [DriverController::class, 'governorates']);
+  Route::get('/profile', [UserController::class, 'get_profile']);
 
   // Client Routes
   Route::middleware('role:client')->group(function () {
@@ -23,6 +26,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
   // Driver Routes
   Route::middleware('role:driver')->group(function () {
+    Route::post('/governorate/attach', [DriverController::class, 'attach_governorate']);
+    Route::post('/governorate/detatch', [DriverController::class, 'detatch_governorate']);
 
   });
 

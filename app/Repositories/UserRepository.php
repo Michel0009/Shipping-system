@@ -36,4 +36,22 @@ class UserRepository
         return $this->user->where('role_id', 3)->get();
     }
 
+    public function delete_unverified_users()
+    {
+        $this->user->whereNull('email_verified_at')
+        ->where(function ($query) {
+
+            $query->where(function ($q) {
+                $q->where('role_id', 3)
+                  ->where('created_at', '<=', now()->subDay());
+            })
+            ->orWhere(function ($q) {
+                $q->where('role_id', 4)
+                  ->where('created_at', '<=', now()->subDays(14));
+            });
+
+        })
+        ->delete();
+    }
+
 }

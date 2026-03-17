@@ -29,7 +29,6 @@ class AuthFormRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255', new NoHtml],
             'email' => 'required|email|unique:users',
             'phone_number' => ['required', 'string', 'max:50', new NoHtml],
-            'location' => ['required', 'string', 'max:255', new NoHtml],
             'password' => [
                 'required',
                 'string',
@@ -93,10 +92,6 @@ class AuthFormRequest extends FormRequest
                 'phone_number.required' => 'رقم الهاتف مطلوب',
                 'phone_number.string' => 'رقم الهاتف يجب أن يكون نصاً',
                 'phone_number.max' => 'رقم الهاتف يجب ألا يتجاوز 50 حرفاً',
-
-                'location.required' => 'الموقع مطلوب',
-                'location.string' => 'الموقع يجب أن يكون نصاً',
-                'location.max' => 'الموقع يجب ألا يتجاوز 255 حرفاً',
 
                 'password.required' => 'كلمة المرور مطلوبة',
                 'password.*' => 'كلمة المرور يجب أن تحتوي على أحرف كبيرة وصغيرة وأرقام ورموز وألا تقل عن 8 أحرف',

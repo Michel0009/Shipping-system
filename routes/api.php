@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\ShipmentController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,7 +22,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
   // Client Routes
   Route::middleware('role:client')->group(function () {
-
+    Route::post('/shipment/create', [ShipmentController::class, 'create_shipment']);
+    Route::get('/shipmentRequest', [ShipmentController::class, 'get_shipment']);
+    Route::delete('/shipmentRequest', [ShipmentController::class, 'delete_shipment']);
+    Route::put('/shipmentRequest', [ShipmentController::class, 'update_shipment']);
+    
+    Route::post('/rateDriver', [ShipmentController::class, 'rate_driver']);
   });
 
   // Driver Routes
@@ -39,6 +45,11 @@ Route::middleware('auth:sanctum')->group(function () {
   // Employee-Admin Routes
   Route::middleware('role:employee,admin')->group(function () {
         Route::post('/createDriver', [UserController::class, 'create_driver']);
+  });
+
+  // Employee-Admin Routes
+  Route::middleware('role:client,driver')->group(function () {
+        Route::post('/report', [UserController::class, 'report']);
   });
 
 });

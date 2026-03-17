@@ -20,7 +20,6 @@ class UserSeeder extends Seeder
           'phone_number' => '0937523553',
           'first_name' => 'admin',
           'last_name' => 'admin',
-          'location' => 'Damascus',
           'user_number' => '00000000',
           'email_verified_at' => now(),
           'role_id' => '1',

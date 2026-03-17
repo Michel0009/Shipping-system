@@ -30,7 +30,6 @@ class AuthService
       'email' => $request['email'],
       'password' => $request['password'],
       'phone_number' => $request['phone_number'],
-      'location' => $request['location'],
       'user_number' => $user_number,
       'role_id' => 3,
     ]);

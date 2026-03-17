@@ -158,7 +158,6 @@ class UserService
             'last_name'    => $request['last_name'],
             'email'        => $request['email'],
             'phone_number' => $request['phone_number'],
-            'location'     => $request['location'],
             'password'     => Hash::make($password),
         ];
 
@@ -241,7 +240,6 @@ class UserService
             'last_name' => $user->last_name,
             'user_number' => $user->user_number,
             'phone_number' => $user->phone_number,
-            'location' => $user->location
         ];
         if ($user['role_id'] != 4) {
             return [

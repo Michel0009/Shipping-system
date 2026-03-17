@@ -21,4 +21,10 @@ class UserController extends Controller
             'message' => $result['message'],
         ], $result['code']);
     }
+
+    public function get_profile(){
+        
+        $result = $this->userService->get_profile();
+        return response()->json($result);
+    }
 }

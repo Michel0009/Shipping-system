@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Jobs\SendEmailJob;
-use App\Models\User;
 use App\Repositories\CarRepository;
 use App\Repositories\DriverRepository;
 use App\Repositories\UserRepository;
 use Exception;
 use finfo;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -69,7 +69,7 @@ class UserService
             Storage::disk('local')->deleteDirectory($directory);
         }
     }
-    private function generate_user_number()
+    public function generate_user_number()
     {
         $lastId = $this->userRepository->get_last_user();
         $userNumber = strrev(str_pad($lastId, 8, '0', STR_PAD_LEFT));
@@ -234,4 +234,34 @@ class UserService
             ]);
         }
     }
+
+    public function get_profile(){
+
+        $user = Auth::user();
+        $userData = [
+            'id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'user_number' => $user->user_number,
+            'phone_number' => $user->phone_number,
+        ];
+        if ($user['role_id'] != 4) {
+            return [
+              'user' => $userData
+            ];
+        }
+
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+        $car = $this->carRepository->find_by_driver_ID($driver->id);
+        $driver_governorates = $this->driverRepository->get_driver_governorates($driver)
+            ->makeHidden(['pivot','created_at','updated_at']);
+
+        return [
+          'user' => $userData,
+          'car' => $car,
+          'driver_governorates' => $driver_governorates
+        ];
+    }
+
+
 }

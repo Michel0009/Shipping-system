@@ -19,6 +19,7 @@ class NoHtml implements Rule
 
     public function message()
     {
-        return 'لا يُسمح بإدخال أكواد HTML أو JavaScript في هذا الحقل';
+        // return 'لا يُسمح بإدخال أكواد HTML أو JavaScript في هذا الحقل';
+        return 'لا يسمح بإدخال رموز أو تنسيقات غير مدعومة في هذا الحقل. يرجى إدخال نص عادي فقط.';
     }
 }

@@ -22,5 +22,11 @@ class CarRepository
     {
         return $this->car_paper->create($data);
     }
+    public function find_by_driver_ID($id)
+    {
+        $car = $this->car->where('driver_id', $id)->select('id', 'vehicle_type_id', 'manufacturer', 'model', 'year_of_manufacture', 'color', 'license_plate_number')
+        ->with(['vehicle_type:id,type,description'])->first();
+        return $car;
+    }
 
 }

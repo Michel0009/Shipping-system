@@ -16,37 +16,41 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get('/logout', [AuthController::class, 'logout']);
-    Route::get('/governorates', [DriverController::class, 'governorates']);
-    Route::get('/profile', [UserController::class, 'get_profile']);
+  Route::get('/logout', [AuthController::class, 'logout']);
+  Route::get('/governorates', [DriverController::class, 'governorates']);
+  Route::get('/profile', [UserController::class, 'get_profile']);
 
-    // Client Routes
-    Route::middleware('role:client')->group(function () {
-        Route::post('/shipment/create', [ShipmentController::class, 'create_shipment']);
-        Route::get('/shipmentRequest', [ShipmentController::class, 'get_shipment']);
-        Route::delete('/shipmentRequest', [ShipmentController::class, 'delete_shipment']);
-        Route::put('/shipmentRequest', [ShipmentController::class, 'update_shipment']);
+  // Client Routes
+  Route::middleware('role:client')->group(function () {
+    Route::post('/shipment/create', [ShipmentController::class, 'create_shipment']);
+    Route::get('/shipmentRequest', [ShipmentController::class, 'get_shipment']);
+    Route::delete('/shipmentRequest', [ShipmentController::class, 'delete_shipment']);
+    Route::put('/shipmentRequest', [ShipmentController::class, 'update_shipment']);
 
-        Route::post('/rateDriver', [ShipmentController::class, 'rate_driver']);
-    });
+    Route::post('/rateDriver', [ShipmentController::class, 'rate_driver']);
+  });
 
-    // Driver Routes
-    Route::middleware('role:driver')->group(function () {
-        Route::get('/changeDriverAvailability', [DriverController::class, 'change_driver_availability']);
-        Route::post('/governorate/attach', [DriverController::class, 'attach_governorate']);
-        Route::post('/governorate/detatch', [DriverController::class, 'detatch_governorate']);
-    });
+  // Driver Routes
+  Route::middleware('role:driver')->group(function () {
+    Route::get('/changeDriverAvailability',[DriverController::class,'change_driver_availability']);
+    Route::post('/governorate/attach', [DriverController::class, 'attach_governorate']);
+    Route::post('/governorate/detatch', [DriverController::class, 'detatch_governorate']);
 
-    // Admin Routes
-    Route::middleware('role:admin')->group(function () {});
+  });
 
-    // Employee-Admin Routes
-    Route::middleware('role:employee,admin')->group(function () {
+  // Admin Routes
+  Route::middleware('role:admin')->group(function () {
+
+  });
+
+  // Employee-Admin Routes
+  Route::middleware('role:employee,admin')->group(function () {
         Route::post('/createDriver', [UserController::class, 'create_driver']);
-    });
+  });
 
-    // Employee-Admin Routes
-    Route::middleware('role:client,driver')->group(function () {
+  // Employee-Admin Routes
+  Route::middleware('role:client,driver')->group(function () {
         Route::post('/report', [UserController::class, 'report']);
-    });
+  });
+
 });

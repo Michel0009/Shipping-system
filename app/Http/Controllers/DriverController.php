@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Http\Requests\DriverFormRequest;
 use App\Services\DriverService;
 
@@ -9,11 +10,17 @@ class DriverController extends Controller
 {
     protected $driverService;
 
+
     public function __construct(DriverService $driverService)
     {
         $this->driverService = $driverService;
     }
 
+    public function change_driver_availability()
+    {
+        $result = $this->driverService->change_driver_availability();
+        return response()->json($result, 200);
+    }
     public function governorates()
     {
         return response()->json(

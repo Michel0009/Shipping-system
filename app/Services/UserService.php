@@ -9,7 +9,6 @@ use App\Repositories\DriverRepository;
 use App\Repositories\UserRepository;
 use Exception;
 use finfo;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -29,10 +28,12 @@ class UserService
 
     public function create_driver(array $request)
     {
-        return DB::transaction(function () use ($request) {
+        try {
             $userId = null;
-            try {
-                $plainPassword = Str::password(12, true, true, true, false);
+
+            return DB::transaction(function () use ($request) {
+
+                $plainPassword = Str::password(rand(12, 16), true, true, true, false);
                 $user = $this->create_user_for_driver($request, $plainPassword);
                 $userId = $user->id;
                 $driver = $this->create_driver_for_driver($request, $userId);
@@ -45,13 +46,21 @@ class UserService
                     'message' => 'تم تسجيل السائق بنجاح',
                     'code' => 201
                 ];
-            } catch (Exception $e) {
-                if ($userId) {
-                    $this->rollbackFolder($userId);
-                }
-                throw $e;
+            }, 3);
+        } catch (Exception $e) {
+            if (isset($userId)) {
+                $this->rollbackFolder($userId);
             }
-        }, 3);
+
+            if ($e->getCode() == 422) {
+                return [
+                    'status' => false,
+                    'message' => $e->getMessage(),
+                    'code' => 422
+                ];
+            }
+            throw $e;
+        }
     }
     private function rollbackFolder($userId)
     {
@@ -62,9 +71,9 @@ class UserService
     }
     private function generate_user_number()
     {
-        $lastId = User::max('id');
+        $lastId = $this->userRepository->get_last_user();
         $userNumber = strrev(str_pad($lastId, 8, '0', STR_PAD_LEFT));
-        if (User::where('user_number', $userNumber)->exists()) {
+        if ($this->userRepository->existsByUserNumber($userNumber)) {
             return $this->generate_user_number();
         }
         return $userNumber;
@@ -85,7 +94,7 @@ class UserService
         ];
 
         if (!in_array($realMime, $allowedMime)) {
-            throw new Exception("نوع الملف الحقيقي غير مسموح لـ {$file->getClientOriginalName()}", 422);
+            throw new Exception("{$file->getClientOriginalName()} نوع الملف الحقيقي غير مسموح لـ ", 422);
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
@@ -124,7 +133,7 @@ class UserService
               <p style="margin:10px 0;">البريد الإلكتروني: <span style="color:#2563eb; font-weight:bold;">' . $user->email . '</span></p>
               <p style="margin:10px 0;">كلمة المرور المؤقتة:</p>
               <div style="font-size:24px; font-weight:bold; text-align:center; color:#ffffff; background-color:#2563eb; padding:15px; border-radius:6px; margin:15px 0;">
-                  ' . $plainPassword . '
+                  ' . e($plainPassword) . '
               </div>
           </div>
 
@@ -157,7 +166,6 @@ class UserService
             'last_name'    => $request['last_name'],
             'email'        => $request['email'],
             'phone_number' => $request['phone_number'],
-            'location'     => $request['location'],
             'password'     => Hash::make($password),
         ];
 
@@ -185,10 +193,6 @@ class UserService
         }
 
         $filePath = $this->check_file($request['personal_picture'], $userId);
-
-        if (is_array($filePath)) {
-            return $filePath;
-        }
         $driverData['personal_picture'] = $filePath;
         return $this->driverRepository->create($driverData);
     }

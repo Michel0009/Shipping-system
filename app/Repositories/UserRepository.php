@@ -25,7 +25,6 @@ class UserRepository
     {
         return $this->user->where('id', $id)->first();
     }
-
     public function save(User $user): bool
     {
         return $user->save();
@@ -35,5 +34,11 @@ class UserRepository
     {
         return $this->user->where('role_id', 3)->get();
     }
-
+    public function get_last_user(){
+        return $this->user->max('id');
+    }
+    public function existsByUserNumber(string $userNumber): bool
+    {
+        return User::where('user_number', $userNumber)->exists();
+    }
 }

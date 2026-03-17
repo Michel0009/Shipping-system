@@ -32,4 +32,8 @@ class DriverRepository
     public function attach_governorates($driver,array $governorateIds){
         return $driver->governorates()->sync($governorateIds);
     }
+    public function findByUserId($id)
+    {
+        return $this->driver->where('user_id',$id)->first();
+    }
 }

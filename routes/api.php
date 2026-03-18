@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
   // Driver Routes
   Route::middleware('role:driver')->group(function () {
+    Route::get('/changeDriverAvailability',[DriverController::class,'change_driver_availability']);
     Route::post('/governorate/attach', [DriverController::class, 'attach_governorate']);
     Route::post('/governorate/detatch', [DriverController::class, 'detatch_governorate']);
 

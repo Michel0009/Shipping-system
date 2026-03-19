@@ -19,7 +19,7 @@ class DriverService
         $user = Auth::user();
         $driver = $this->driverRepository->find_by_user_ID($user->id);
         $driver->availability = !$driver->availability;
-        $driver->save();
+        $this->driverRepository->save($driver);
         return [
             'message' => 'تم تغيير الحالة بنجاح',
         ];

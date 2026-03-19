@@ -73,7 +73,7 @@ class UserService
     {
         $lastId = $this->userRepository->get_last_user();
         $userNumber = strrev(str_pad($lastId, 8, '0', STR_PAD_LEFT));
-        if ($this->userRepository->existsByUserNumber($userNumber)) {
+        if ($this->userRepository->exists_by_user_number($userNumber)) {
             return $this->generate_user_number();
         }
         return $userNumber;
@@ -108,7 +108,7 @@ class UserService
     }
     private function send_email(string $email, string $plainPassword)
     {
-        $user = $this->userRepository->findByEmail($email);
+        $user = $this->userRepository->find_by_email($email);
         if (!$user) return;
 
         $subject = 'مرحباً بك في نظام شحن البضائع - بيانات الدخول الخاصة بك';

@@ -41,7 +41,7 @@ class AuthService
 
   public function send_email(string $email)
   {
-    $user = $this->userRepository->findByEmail($email);
+    $user = $this->userRepository->find_by_email($email);
     if (!$user) return;
 
     $code = rand(100000, 999999);
@@ -97,7 +97,7 @@ class AuthService
 
   public function verification(array $request)
   {
-    $user = $this->userRepository->findByEmail($request['email']);
+    $user = $this->userRepository->find_by_email($request['email']);
     if (!$user) return false;
 
     $cache_value = Cache::get($user->id);
@@ -122,7 +122,7 @@ class AuthService
 
   public function new_password_verification(array $request)
   {
-    $user = $this->userRepository->findByEmail($request['email']);
+    $user = $this->userRepository->find_by_email($request['email']);
     if (!$user) return false;
 
     $cache_value = Cache::get($user->id);
@@ -144,7 +144,7 @@ class AuthService
 
   public function reset_password(array $request)
   {
-    $user = $this->userRepository->findByEmail($request['email']);
+    $user = $this->userRepository->find_by_email($request['email']);
     if (!$user) return false;
 
     $storedToken = Cache::get("reset_token_".$user->id);
@@ -164,7 +164,7 @@ class AuthService
   public function login(array $request)
   {
 
-    $user = $this->userRepository->findByEmail($request['email']);
+    $user = $this->userRepository->find_by_email($request['email']);
 
     if ($user && Hash::check($request['password'], $user->password)) {
 

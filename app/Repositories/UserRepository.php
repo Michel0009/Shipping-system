@@ -16,15 +16,15 @@ class UserRepository
         return $this->user->create($data);
     }
 
-    public function findByEmail(string $email): ?User
+    public function find_by_email(string $email): ?User
     {
         return $this->user->where('email', $email)->first();
     }
 
-    public function findByID($id): ?User
-    {
-        return $this->user->where('id', $id)->first();
-    }
+    // public function findByID($id): ?User
+    // {
+    //     return $this->user->where('id', $id)->first();
+    // }
     public function save(User $user): bool
     {
         return $user->save();
@@ -37,7 +37,7 @@ class UserRepository
     public function get_last_user(){
         return $this->user->max('id');
     }
-    public function existsByUserNumber(string $userNumber): bool
+    public function exists_by_user_number(string $userNumber): bool
     {
         return User::where('user_number', $userNumber)->exists();
     }

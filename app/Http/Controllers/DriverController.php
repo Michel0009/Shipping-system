@@ -8,7 +8,7 @@ use App\Services\DriverService;
 
 class DriverController extends Controller
 {
-    protected $driverService;
+    protected DriverService $driverService;
 
     public function __construct(DriverService $driverService)
     {

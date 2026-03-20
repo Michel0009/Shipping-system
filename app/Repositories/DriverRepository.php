@@ -22,6 +22,10 @@ class DriverRepository
     {
         return $this->driver->create($data);
     }
+    public function save(Driver $driver): bool
+    {
+        return $driver->save();
+    }
     public function create_license(array $data): License
     {
         return $this->license->create($data);

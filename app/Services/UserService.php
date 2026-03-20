@@ -263,5 +263,27 @@ class UserService
         ];
     }
 
+    public function edit_profile(array $data)
+    {
+        $user = Auth::user();
+
+        if ($user->role_id != 4) {
+            if (isset($data['first_name'])) {
+                $user->first_name = $data['first_name'];
+            }
+            if (isset($data['last_name'])) {
+                $user->last_name = $data['last_name'];
+            }
+        }
+        
+        if (isset($data['phone_number'])) {
+            $user->phone_number = $data['phone_number'];
+        }
+    
+        $this->userRepository->save($user);
+
+        return true;
+    }
+
 
 }

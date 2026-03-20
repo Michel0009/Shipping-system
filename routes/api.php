@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
   // Client-Driver Routes
   Route::middleware('role:client,driver')->group(function () {
         Route::post('/report', [ReportController::class, 'report']);
+        Route::put('/editProfile', [UserController::class, 'edit_profile']);
   });
 
 });

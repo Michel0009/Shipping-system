@@ -60,6 +60,9 @@ class UserFormRequest extends FormRequest
                 'car_papers.*.car_file' => ['required', 'file', 'mimes:pdf', $fileLimit],
             ],
             'edit_profile' => $this->edit_profile_rules(),
+            'save_device_token' => [
+                'token' => 'required|string'
+            ],
 
             default => [],
         };

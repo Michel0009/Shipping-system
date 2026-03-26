@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShipmentController;
@@ -28,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/shipmentRequest', [ShipmentController::class, 'get_shipment']);
     Route::delete('/shipmentRequest', [ShipmentController::class, 'delete_shipment']);
     Route::put('/shipmentRequest', [ShipmentController::class, 'update_shipment']);
+    Route::get('/availableDrivers',[DriverController::class,'available_drivers']);
     
     Route::post('/review', [ReviewController::class, 'create_review']);
   });
@@ -56,6 +58,10 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::middleware('role:client,driver')->group(function () {
         Route::post('/report', [ReportController::class, 'report']);
         Route::put('/editProfile', [UserController::class, 'edit_profile']);
+
+        Route::get('/notifications', [NotificationController::class, 'get_all_notifications']);
+        Route::get('/newNotifications/count', [NotificationController::class, 'new_notifications_count']);
+        Route::post('/saveDeviceToken', [NotificationController::class, 'save_device_token']);
   });
 
 });

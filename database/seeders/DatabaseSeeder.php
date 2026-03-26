@@ -20,5 +20,6 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(VehicleTypeSeeder::class);
         $this->call(BadgeSeeder::class);
+        $this->call(CoefficientSeeder::class);
     }
 }

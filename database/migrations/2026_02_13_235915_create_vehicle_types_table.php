@@ -17,6 +17,15 @@ return new class extends Migration
             $table->longText('description');
             $table->decimal('vehicle_coefficient',5,2);
             $table->decimal('avg_fuel_consumption',5,2);
+            $table->decimal('base_fare',10,2);
+            $table->decimal('min_weight', 8,2);
+            $table->decimal('max_weight', 8,2);
+            $table->decimal('min_length', 8,2);
+            $table->decimal('max_length', 8,2);
+            $table->decimal('min_width', 8,2);
+            $table->decimal('max_width', 8,2);
+            $table->decimal('min_height', 8,2);
+            $table->decimal('max_height', 8,2);
             $table->timestamps();
         });
     }

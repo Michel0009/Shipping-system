@@ -109,4 +109,9 @@ class DriverRepository
     {
         return Coefficient::pluck('value', 'name');
     }
+
+    public function find_driver($id)
+    {
+        return $this->driver->where('id', $id)->first();
+    }
 }

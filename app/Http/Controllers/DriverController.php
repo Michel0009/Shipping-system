@@ -57,4 +57,11 @@ class DriverController extends Controller
             'data' => $drivers
         ]);
     }
+
+    public function get_driver_details($id)
+    {
+        $driver = $this->driverService->get_driver_details($id);
+
+        return response()->json($driver);
+    }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShipmentController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehicleTypeController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'user_Register']);
@@ -22,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('/logout', [AuthController::class, 'logout']);
   Route::get('/governorates', [DriverController::class, 'governorates']);
   Route::get('/profile', [UserController::class, 'get_profile']);
+  Route::get('/vehicleTypes', [VehicleTypeController::class, 'vehicle_types']);
 
   // Client Routes
   Route::middleware('role:client')->group(function () {
@@ -30,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/shipmentRequest', [ShipmentController::class, 'delete_shipment']);
     Route::put('/shipmentRequest', [ShipmentController::class, 'update_shipment']);
     Route::get('/availableDrivers',[DriverController::class,'available_drivers']);
+    Route::get('/driver/{id}', [DriverController::class, 'get_driver_details']);
     
     Route::post('/review', [ReviewController::class, 'create_review']);
   });
@@ -46,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
   // Admin Routes
   Route::middleware('role:admin')->group(function () {
+    Route::post('/vehicleType/create', [VehicleTypeController::class, 'create_vehicle_type']);
+    Route::put('/vehicleType/update/{id}', [VehicleTypeController::class, 'update_vehicle_type']);
 
   });
 

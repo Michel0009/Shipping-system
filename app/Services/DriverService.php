@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Repositories\CarRepository;
 use App\Repositories\DriverRepository;
+use App\Repositories\ReviewRepository;
+use App\Repositories\UserRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -11,10 +14,17 @@ class DriverService
 {
 
     protected $driverRepository;
+    protected $carRepository;
+    protected $reviewRepository;
+    protected $userRepository;
 
-    public function __construct(DriverRepository $driverRepository)
+    public function __construct(DriverRepository $driverRepository, CarRepository $carRepository,
+         ReviewRepository $reviewRepository, UserRepository $userRepository)
     {
         $this->driverRepository = $driverRepository;
+        $this->carRepository = $carRepository;
+        $this->reviewRepository = $reviewRepository;
+        $this->userRepository = $userRepository;
     }
     public function change_driver_availability()
     {
@@ -143,5 +153,34 @@ class DriverService
         }
 
         return collect($result)->sortBy('distance_to_start_km')->values();
+    }
+
+    public function get_driver_details($id){
+
+        $driver = $this->driverRepository->find_driver($id);
+        $user = $this->userRepository->find_user($driver->user_id);
+        $userData = [
+            'user_id' => $user->id,
+            'driver_id' => $id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'user_number' => $user->user_number,
+            'phone_number' => $user->phone_number,
+        ];
+
+        $car = $this->carRepository->find_by_driver_ID($id);
+        $driver_governorates = $this->driverRepository->get_driver_governorates($driver)
+            ->makeHidden(['pivot','created_at','updated_at']);
+            
+        $average = $this->reviewRepository->get_driver_average_rate($id);
+        $badge = $this->driverRepository->get_badge($driver);
+
+        return [
+          'user' => $userData,
+          'car' => $car,
+          'driver_governorates' => $driver_governorates,
+          'average_rate' => round($average, 2),
+          'badge' => $badge,
+        ];
     }
 }

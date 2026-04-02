@@ -89,7 +89,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'تم حظر هذا الحساب، يرجى التواصل مع الإدارة'],403);
         }
         if (!$result) {
-            return response()->json(['message' => 
+            return response()->json(['message' =>
                 'البريد الإلكتروني لا يتطابق مع كلمة المرور، يرجى المحاولة مرة أخرى'],401);
         }
 
@@ -104,5 +104,5 @@ class AuthController extends Controller
             'message' => 'تم تسجيل الخروج بنجاح'
         ]);
     }
-  
+ 
 }

@@ -19,21 +19,21 @@ class NotificationService
         $this->userRepository = $userRepository;
     }
 
-    public function send_notification(int $user_ID, string $message, int $complaint_number)
+    public function send_notification(int $user_ID, string $message, int $shipment_id, string $title)
     {
         $notification = $this->notificationRepository->create([
           'user_id' => $user_ID,
           'message' => $message,
+          'title' => $title,
           'status' => false,
-          'complaint_number' => $complaint_number
+          'shipment_id' => $shipment_id
         ]);  
 
         $user = $this->userRepository->findByID($user_ID);
         $device_tokens = $user->device_token;
 
         foreach ($device_tokens as $device) {
-
-            SendFcmNotification::dispatch($device->token, $notification);
+            SendFcmNotification::dispatch($device->token, $notification, $title);
         }
 
     }

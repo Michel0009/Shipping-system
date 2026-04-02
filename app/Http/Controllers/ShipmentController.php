@@ -55,6 +55,13 @@ class ShipmentController extends Controller
         ]);
     }
 
+    public function extend_shipment()
+    {
+        return response()->json(
+            $this->shipmentService->extend_shipment_request()
+        );
+    }
+
     
   
 }

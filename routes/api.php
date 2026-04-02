@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/shipmentRequest', [ShipmentController::class, 'update_shipment']);
     Route::get('/availableDrivers',[DriverController::class,'available_drivers']);
     Route::get('/driver/{id}', [DriverController::class, 'get_driver_details']);
+    Route::get('/shipment/extend', [ShipmentController::class, 'extend_shipment']);
     
     Route::post('/review', [ReviewController::class, 'create_review']);
   });

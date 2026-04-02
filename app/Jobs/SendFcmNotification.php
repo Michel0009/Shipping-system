@@ -16,12 +16,13 @@ class SendFcmNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $token, $message;
+    public $token, $data, $title;
 
-    public function __construct($token, $message)
+    public function __construct($token, $data, $title)
     {
         $this->token = $token;
-        $this->message = $message;
+        $this->data = $data;
+        $this->title = $title;
         Log::info("Dispatching job for token: {$token}");
     }
 
@@ -45,11 +46,11 @@ class SendFcmNotification implements ShouldQueue
             "message" => [
                 "token" => $this->token,
                 "notification" => [
-                    "title" => "تنبيه جديد",
-                    "body" => $this->message['message']
+                    "title" => $this->title,
+                    "body" => $this->data['message']
                 ],
                 "data" => [
-                     "notification" => json_encode($this->message, JSON_UNESCAPED_UNICODE),
+                     "notification" => json_encode($this->data, JSON_UNESCAPED_UNICODE),
                  ],
              
                  "android" => [
@@ -76,7 +77,8 @@ class SendFcmNotification implements ShouldQueue
            $json = $response->json();
             if (!empty($json['error']['details'][0]['errorCode']) 
                 && $json['error']['details'][0]['errorCode'] === 'INVALID_ARGUMENT') {
-                Device_token::where('token', $this->token)->delete();
+                // Device_token::where('token', $this->token)->delete();
+                app(\App\Repositories\NotificationRepository::class)->delete_token($this->token);
                 Log::info("Deleted invalid FCM token", ['token' => $this->token]);
             }
         }

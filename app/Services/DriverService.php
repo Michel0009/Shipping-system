@@ -74,15 +74,27 @@ class DriverService
             throw new Exception('لا يوجد طلب شحنة');
         }
 
+        // Get available drivers who suits the shipment
         $drivers = $this->driverRepository->get_available_drivers($shipment);
 
         $coeff = $this->driverRepository->get_coefficients();
 
         $baseRate = $coeff['base_rate'] ?? 500;
         $insuranceRate = $coeff['insurance'] ?? 0.3;
+        
+        // 2. Distance between start_position and end_position
+        $shipmentStart = "{$shipment['start_position_lng']},{$shipment['start_position_lat']}";
+        $shipmentEnd = "{$shipment['end_position_lng']},{$shipment['end_position_lat']}";
+        $url2 = "http://router.project-osrm.org/route/v1/driving/{$shipmentStart};{$shipmentEnd}?overview=false";
+        $res2 = json_decode(file_get_contents($url2), true);
+
+        if (!isset($res2['routes'][0])) {
+            throw new Exception('فشل حساب مسافة الشحنة');
+        }
+
+        $shipmentDistance = $res2['routes'][0]['distance'] / 1000;
 
         $result = [];
-
         foreach ($drivers as $driver) {
 
             // Get driver location
@@ -91,7 +103,6 @@ class DriverService
 
             // 1. Distance between driver and start_position
             $startDriver = "{$loc['lng']},{$loc['lat']}";
-            $shipmentStart = "{$shipment['start_position_lng']},{$shipment['start_position_lat']}";
 
             $url1 = "http://router.project-osrm.org/route/v1/driving/{$startDriver};{$shipmentStart}?overview=false";
             $res1 = json_decode(file_get_contents($url1), true);
@@ -99,16 +110,6 @@ class DriverService
             if (!isset($res1['routes'][0])) continue;
 
             $distanceToStart = $res1['routes'][0]['distance'] / 1000;
-
-            // 2. Distance between start_position and end_position
-            $shipmentEnd = "{$shipment['end_position_lng']},{$shipment['end_position_lat']}";
-
-            $url2 = "http://router.project-osrm.org/route/v1/driving/{$shipmentStart};{$shipmentEnd}?overview=false";
-            $res2 = json_decode(file_get_contents($url2), true);
-
-            if (!isset($res2['routes'][0])) continue;
-
-            $shipmentDistance = $res2['routes'][0]['distance'] / 1000;
 
             // Get vehicle type for price calculation
             $vehicle = $driver->car;

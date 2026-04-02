@@ -41,4 +41,9 @@ class NotificationRepository
             ['user_id' => $userId]
         );
     }
+
+    public function delete_token(string $token)
+    {
+        return Device_token::where('token', $token)->delete();
+    }
 }

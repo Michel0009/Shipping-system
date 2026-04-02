@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\Badge;
+use App\Models\Coefficient;
 use App\Models\Driver;
 use App\Models\Governorate;
 use App\Models\License;
@@ -61,5 +63,55 @@ class DriverRepository
     public function detach_governorate($driver,$governorateId)
     {
         return $driver->governorates()->detach($governorateId);
+    }
+
+    public function get_badge($driver)
+    {
+        return Badge::where('id', $driver->badge_id)->select('level','name','text')->first();
+    }
+
+    public function get_available_drivers($shipment)
+    {
+        return $this->driver->with([
+            'user',
+            'car.vehicle_type',
+            'reviews',
+            'badge',
+            'governorates'
+        ])
+        ->where('availability', true)
+        ->get()
+        ->filter(function ($driver) use ($shipment) {
+
+            $govs = $driver->governorates->pluck('id')->toArray();
+            if (
+                !in_array($shipment['start_governorate_id'], $govs) ||
+                !in_array($shipment['end_governorate_id'], $govs)
+            ) {
+                return false;
+            }
+
+            $type = $driver->car->vehicle_type;
+
+            return
+                $shipment['weight'] >= $type->min_weight &&
+                $shipment['weight'] <= $type->max_weight &&
+                $shipment['length'] >= $type->min_length &&
+                $shipment['length'] <= $type->max_length &&
+                $shipment['width'] >= $type->min_width &&
+                $shipment['width'] <= $type->max_width &&
+                $shipment['height'] >= $type->min_height &&
+                $shipment['height'] <= $type->max_height;
+        });
+    }
+
+    public function get_coefficients()
+    {
+        return Coefficient::pluck('value', 'name');
+    }
+
+    public function find_driver($id)
+    {
+        return $this->driver->where('id', $id)->first();
     }
 }

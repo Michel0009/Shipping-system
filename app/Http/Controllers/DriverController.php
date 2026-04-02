@@ -48,4 +48,20 @@ class DriverController extends Controller
             'message' => 'تم تعديل خط النقل بنجاح'
         ]);
     }
+
+    public function available_drivers()
+    {
+        $drivers = $this->driverService->get_available_drivers();
+
+        return response()->json([
+            'data' => $drivers
+        ]);
+    }
+
+    public function get_driver_details($id)
+    {
+        $driver = $this->driverService->get_driver_details($id);
+
+        return response()->json($driver);
+    }
 }

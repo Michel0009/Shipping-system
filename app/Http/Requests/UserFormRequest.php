@@ -59,6 +59,10 @@ class UserFormRequest extends FormRequest
                 'car_papers.*.type'     => ['required', 'string', 'max:100', $noHtml],
                 'car_papers.*.car_file' => ['required', 'file', 'mimes:pdf', $fileLimit],
             ],
+            'edit_profile' => $this->edit_profile_rules(),
+            'save_device_token' => [
+                'token' => 'required|string'
+            ],
 
             default => [],
         };
@@ -89,6 +93,11 @@ class UserFormRequest extends FormRequest
                 'integer'  => '.يجب أن يكون :attribute رقماً',
                 'min'      => '.يجب أن يكون :attribute على الأقل :min',
                 'min.numeric' => '.يجب أن يكون :attribute :min عام أو أحدث'
+            ],
+            'edit_profile' => [
+                'required' => '.حقل :attribute مطلوب',
+                'string' => '.حقل :attribute يجب أن يكون نصاً',
+                'max' => '.حقل :attribute يجب ألا يتجاوز :max عنصر',
             ],
 
             default => [],
@@ -131,8 +140,32 @@ class UserFormRequest extends FormRequest
                 'car_status'           => 'حالة السيارة',
                 'car_papers'           => 'أوراق السيارة',
             ],
+            'edit_profile' => [
+                'first_name' => 'الاسم الأول',
+                'last_name' => 'الكنية',
+                'phone_number' => 'رقم الهاتف',
+            ],
 
             default => [],
         };
     }
+
+    private function edit_profile_rules(): array
+    {
+        $user = auth()->user();
+        $noHtml = new NoHtml();
+
+        if ($user->role_id == 4) {
+            return [
+                'phone_number' => ['required', 'string', 'max:20', $noHtml],
+            ];
+        }
+        return [
+            'first_name'   => ['sometimes', 'string', 'max:255', $noHtml],
+            'last_name'    => ['sometimes', 'string', 'max:255', $noHtml],
+            'phone_number' => ['sometimes', 'string', 'max:20', $noHtml],
+        ];
+    }
+
+
 }

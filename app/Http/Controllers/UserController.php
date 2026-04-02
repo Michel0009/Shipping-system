@@ -27,4 +27,13 @@ class UserController extends Controller
         $result = $this->userService->get_profile();
         return response()->json($result);
     }
+
+    public function edit_profile(UserFormRequest $request)
+    {
+        $result = $this->userService->edit_profile($request->validated());
+
+        return response()->json([
+            'message' => 'تم تعديل الملف الشخصي بنجاح',
+        ]);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\SendEmailJob;
 use App\Repositories\CarRepository;
 use App\Repositories\DriverRepository;
+use App\Repositories\ReviewRepository;
 use App\Repositories\UserRepository;
 use Exception;
 use finfo;
@@ -19,11 +20,16 @@ class UserService
     protected $userRepository;
     protected $driverRepository;
     protected $carRepository;
-    public function __construct(UserRepository $userRepository, DriverRepository $driverRepository, CarRepository $carRepository)
+    protected $notificationRepository;
+    protected $reviewRepository;
+
+    public function __construct(UserRepository $userRepository, DriverRepository $driverRepository,
+         CarRepository $carRepository, ReviewRepository $reviewRepository)
     {
         $this->userRepository = $userRepository;
         $this->driverRepository = $driverRepository;
         $this->carRepository = $carRepository;
+        $this->reviewRepository = $reviewRepository;
     }
 
     public function create_driver(array $request)
@@ -255,12 +261,39 @@ class UserService
         $car = $this->carRepository->find_by_driver_ID($driver->id);
         $driver_governorates = $this->driverRepository->get_driver_governorates($driver)
             ->makeHidden(['pivot','created_at','updated_at']);
+            
+        $average = $this->reviewRepository->get_driver_average_rate($driver->id);
+        $badge = $this->driverRepository->get_badge($driver);
 
         return [
           'user' => $userData,
           'car' => $car,
-          'driver_governorates' => $driver_governorates
+          'driver_governorates' => $driver_governorates,
+          'average_rate' => round($average, 2),
+          'badge' => $badge,
         ];
+    }
+
+    public function edit_profile(array $data)
+    {
+        $user = Auth::user();
+
+        if ($user->role_id != 4) {
+            if (isset($data['first_name'])) {
+                $user->first_name = $data['first_name'];
+            }
+            if (isset($data['last_name'])) {
+                $user->last_name = $data['last_name'];
+            }
+        }
+        
+        if (isset($data['phone_number'])) {
+            $user->phone_number = $data['phone_number'];
+        }
+    
+        $this->userRepository->save($user);
+
+        return true;
     }
 
 

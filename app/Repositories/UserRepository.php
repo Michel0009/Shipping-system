@@ -21,10 +21,11 @@ class UserRepository
         return $this->user->where('email', $email)->first();
     }
 
-    // public function findByID($id): ?User
-    // {
-    //     return $this->user->where('id', $id)->first();
-    // }
+    public function find_user($id): ?User
+    {
+        return $this->user->where('id', $id)->first();
+    }
+
     public function save(User $user): bool
     {
         return $user->save();

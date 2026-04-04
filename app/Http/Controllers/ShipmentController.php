@@ -62,6 +62,14 @@ class ShipmentController extends Controller
         );
     }
 
+    public function send_to_driver(ShipmentFormRequest $request)
+    {
+        $result = $this->shipmentService->send_to_driver($request->validated());
+
+        return response()->json([
+            'message' => $result,
+        ]);
+    }
     
   
 }

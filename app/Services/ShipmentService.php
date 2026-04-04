@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Repositories\DriverRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -9,12 +10,12 @@ use Illuminate\Support\Facades\Cache;
 class ShipmentService
 {
 
-  // protected $userRepository;
+  protected $driverRepository;
 
-  // public function __construct(UserRepository $userRepository)
-  // {
-  //     $this->userRepository = $userRepository;
-  // }
+  public function __construct(DriverRepository $driverRepository)
+  {
+      $this->driverRepository = $driverRepository;
+  }
 
   public function create_shipment(array $data)
   {
@@ -118,6 +119,54 @@ class ShipmentService
           'remaining_minutes_before' => round($remaining / 60),
           'remaining_minutes_after' => 60
       ];
+  }
+
+  public function send_to_driver(array $data)
+  {
+      $user = Auth::user();
+  
+      $shipmentKey = "shipment_request_user_" . $user->id;
+      $shipment = Cache::get($shipmentKey);
+  
+      if (!$shipment) {
+          throw new Exception('لا يوجد طلب شحنة');
+      }
+      $driver = $this->driverRepository->find_driver($data['driver_id']);
+  
+      if (!$driver->availability) {
+          return "هذا السائق غير متاح حاليا";
+      }
+
+      $startGov = $this->driverRepository->find_governorate($shipment['start_governorate_id']);
+      $endGov = $this->driverRepository->find_governorate($shipment['end_governorate_id']);
+      $shipment['start_governorate'] = $startGov->name;
+      $shipment['end_governorate'] = $endGov->name;
+  
+      $requestKey = "driver_request_{$driver->id}_user_{$user->id}";
+      $expiresAt = now()->addMinutes(10);
+  
+      $payload = [
+          'user_id' => $user->id,
+          'driver_id' => $driver->id,
+          'price' => $data['price'],
+          'distance_to_start' => $data['distanceToStart'],
+          'shipment_distance' => $data['shipmentDistance'],
+          'shipment' => $shipment,
+          'expires_at' => $expiresAt
+      ];
+  
+      $added = Cache::add($requestKey, $payload, $expiresAt);
+  
+      if (!$added) {
+        // Cache::forget($requestKey);
+          return "تم إرسال طلب لهذا السائق مسبقاً";
+      }
+  
+      app(\App\Services\NotificationService::class)->send_notification($driver->user_id,
+          'لديك طلب شحنة جديد. الرجاء التحقق منه والتعامل معه', 0, 'طلب شحنة جديد', $payload
+      );
+  
+      return "تم إرسال الطلب إلى السائق";
   }
 
 }

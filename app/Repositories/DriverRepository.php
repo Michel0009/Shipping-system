@@ -50,6 +50,11 @@ class DriverRepository
         return Governorate::query()->select('id', 'name')->get();
     }
 
+    public function find_governorate($id)
+    {
+        return Governorate::query()->where('id', $id)->first();
+    }
+
     public function get_driver_governorates($driver)
     {
         return $driver->governorates()->get();

@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\Device_token;
 use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,11 +15,12 @@ class SendFcmNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $token, $data, $title;
+    public $token, $data, $title, $message;
 
-    public function __construct($token, $data, $title)
+    public function __construct($token, $message, $title, $data)
     {
         $this->token = $token;
+        $this->message = $message;
         $this->data = $data;
         $this->title = $title;
         Log::info("Dispatching job for token: {$token}");
@@ -47,7 +47,7 @@ class SendFcmNotification implements ShouldQueue
                 "token" => $this->token,
                 "notification" => [
                     "title" => $this->title,
-                    "body" => $this->data['message']
+                    "body" => $this->message
                 ],
                 "data" => [
                      "notification" => json_encode($this->data, JSON_UNESCAPED_UNICODE),
@@ -77,7 +77,6 @@ class SendFcmNotification implements ShouldQueue
            $json = $response->json();
             if (!empty($json['error']['details'][0]['errorCode']) 
                 && $json['error']['details'][0]['errorCode'] === 'INVALID_ARGUMENT') {
-                // Device_token::where('token', $this->token)->delete();
                 app(\App\Repositories\NotificationRepository::class)->delete_token($this->token);
                 Log::info("Deleted invalid FCM token", ['token' => $this->token]);
             }

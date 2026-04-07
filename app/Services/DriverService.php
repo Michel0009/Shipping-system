@@ -81,7 +81,7 @@ class DriverService
 
         $baseRate = $coeff['base_rate'] ?? 500;
         $insuranceRate = $coeff['insurance'] ?? 0.3;
-        
+
         // 2. Distance between start_position and end_position
         $shipmentStart = "{$shipment['start_position_lng']},{$shipment['start_position_lat']}";
         $shipmentEnd = "{$shipment['end_position_lng']},{$shipment['end_position_lat']}";
@@ -172,7 +172,7 @@ class DriverService
         $car = $this->carRepository->find_by_driver_ID($id);
         $driver_governorates = $this->driverRepository->get_driver_governorates($driver)
             ->makeHidden(['pivot','created_at','updated_at']);
-            
+
         $average = $this->reviewRepository->get_driver_average_rate($id);
         $badge = $this->driverRepository->get_badge($driver);
 
@@ -183,5 +183,41 @@ class DriverService
           'average_rate' => round($average, 2),
           'badge' => $badge,
         ];
+    }
+    public function get_drivers()
+    {
+        $driversPaginator = $this->driverRepository->get_drivers();
+        $availableCount = $this->driverRepository->get_available_drivers_count();
+
+        return [
+            'available_drivers' => $availableCount,
+            'drivers'           => $driversPaginator
+        ];
+    }
+    public function get_driver_details_for_admin($id)
+    {
+        $driver = $this->get_driver_details($id);
+        $shipments = $this->driverRepository->get_driver_shipments_by_id($id);
+        if ($shipments->isNotEmpty()) {
+            $amountToPay = $shipments->sum('price');
+            $amountToPay *= 0.15;
+        } else {
+            $amountToPay = 0;
+        }
+        return [
+            'driver' => $driver,
+            'amount_to_pay' => $amountToPay
+        ];
+    }
+    public function search_for_driver(array $data)
+    {
+        $driver_number = $data['driver_number'];
+        $driver = $this->driverRepository->find_by_user_number($driver_number);
+        if (!$driver) {
+            return [
+                'message' => 'لا يوجد سائق بهذا الرقم'
+            ];
+        }
+        return $driver;
     }
 }

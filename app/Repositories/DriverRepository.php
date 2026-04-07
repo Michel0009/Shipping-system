@@ -114,4 +114,42 @@ class DriverRepository
     {
         return $this->driver->where('id', $id)->first();
     }
+    public function get_drivers()
+    {
+        $drivers = $this->driver
+            ->with([
+                'user:id,first_name,last_name,email,phone_number',
+                'car.vehicle_type:id,type'
+            ])
+            ->withAvg('reviews', 'rate')
+            ->withCount('shipments')
+            ->paginate(5);
+        return $drivers->through(function ($driver) {
+            return [
+                'first_name'   => $driver->user->first_name,
+                'last_name'    => $driver->user->last_name ,
+                'email'        => $driver->user->email,
+                'phone_number' => $driver->user->phone_number ,
+                'availability' => (bool) $driver->availability,
+                'vehicle_type' => $driver->car->vehicle_type->type,
+                'rating'       => number_format($driver->reviews_avg_rate, 2) ?? "0.00",
+                'shipments_count' => $driver->shipments_count ?? 0,
+            ];
+        });
+    }
+    public function get_available_drivers_count()
+    {
+        return $this->driver->where('availability', true)->count();
+    }
+    public function get_driver_shipments_by_id($id)
+    {
+        $driver = $this->find_driver($id);
+        return $driver->shipments()->get();
+    }
+    public function find_by_user_number($user_number)
+    {
+        return $this->driver->whereHas('user', function ($query) use ($user_number) {
+            $query->where('user_number', $user_number);
+        })->first();
+    }
 }

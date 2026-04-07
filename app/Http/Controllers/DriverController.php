@@ -64,4 +64,22 @@ class DriverController extends Controller
 
         return response()->json($driver);
     }
+    public function get_drivers()
+    {
+        $drivers = $this->driverService->get_drivers();
+        return response()->json($drivers);
+    }
+    public function get_driver_details_for_admin(DriverFormRequest $request, $id)
+    {
+        $driverId = $request->id;
+        $driver = $this->driverService->get_driver_details_for_admin($driverId);
+        return response()->json($driver);
+    }
+    public function search_for_driver(DriverFormRequest $request)
+    {
+        $validated = $request->validated();
+        $driver = $this->driverService->search_for_driver($validated);
+        return response()->json($driver);
+
+    }
 }

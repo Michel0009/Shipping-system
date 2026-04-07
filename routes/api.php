@@ -34,7 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/availableDrivers',[DriverController::class,'available_drivers']);
     Route::get('/driver/{id}', [DriverController::class, 'get_driver_details']);
     Route::get('/shipment/extend', [ShipmentController::class, 'extend_shipment']);
-    
+
     Route::post('/review', [ReviewController::class, 'create_review']);
   });
 
@@ -58,6 +58,9 @@ Route::middleware('auth:sanctum')->group(function () {
   // Employee-Admin Routes
   Route::middleware('role:employee,admin')->group(function () {
         Route::post('/createDriver', [UserController::class, 'create_driver']);
+        Route::get('/getDrivers', [DriverController::class, 'get_drivers']);
+        Route::get('/driverDetails/{id}', [DriverController::class, 'get_driver_details_for_admin']);
+        Route::post('/searchForDriver', [DriverController::class, 'search_for_driver']);
   });
 
   // Client-Driver Routes

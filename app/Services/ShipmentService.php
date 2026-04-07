@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\DriverRepository;
+use App\Repositories\ShipmentRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -11,10 +12,12 @@ class ShipmentService
 {
 
   protected $driverRepository;
+  protected $shipmentRepository;
 
-  public function __construct(DriverRepository $driverRepository)
+  public function __construct(DriverRepository $driverRepository, ShipmentRepository $shipmentRepository)
   {
       $this->driverRepository = $driverRepository;
+      $this->shipmentRepository = $shipmentRepository;
   }
 
   public function create_shipment(array $data)
@@ -167,6 +170,49 @@ class ShipmentService
       );
   
       return "تم إرسال الطلب إلى السائق";
+  }
+
+
+  public function respond_to_request(array $data)
+  {
+      $user = Auth::user();
+      $driver =  $this->driverRepository->find_by_user_ID($user->id);
+
+      $requestKey = "driver_request_{$driver->id}_user_{$data['user_id']}";
+      $request = Cache::get($requestKey);
+  
+      if (!$request) {
+          throw new Exception('انتهت صلاحية الطلب أو أنه غير موجود');
+      }
+  
+      if (!$data['action']) {
+  
+          Cache::forget($requestKey);
+  
+          app(\App\Services\NotificationService::class)->send_notification($data['user_id'],
+              'تم رفض طلب الشحنة من قبل السائق', 0, 'رفض الطلب', []
+          );
+  
+          return "تم رفض الطلب";
+      }
+      $shipmentNumber = time() . rand(100, 999);
+      $pin = random_int(100000, 999999);
+  
+      $shipment = $this->shipmentRepository->create(
+          $request,
+          $shipmentNumber,
+          $pin
+      );
+  
+      Cache::forget($requestKey);
+      Cache::forget("shipment_request_user_" . $data['user_id']);
+  
+      app(\App\Services\NotificationService::class)->send_notification($data['user_id'],
+          "تم قبول طلب الشحنة بنجاح. يمكنك متابعتها الآن باستخدام رقم الشحنة {$shipmentNumber} المولّد.",
+           $shipment->id, 'قبول الطلب', $shipment
+      );
+
+      return "تم قبول الطلب وإنشاء الشحنة";
   }
 
 }

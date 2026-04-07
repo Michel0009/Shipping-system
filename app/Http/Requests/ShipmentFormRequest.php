@@ -57,6 +57,10 @@ class ShipmentFormRequest extends FormRequest
             'distanceToStart' => 'required|numeric',
             'shipmentDistance' => 'required|numeric',
         ],
+        'respond_to_request' => [
+            'user_id' => 'required|exists:users,id',
+            'action' => 'required|boolean'
+        ],
         
         default => [],
       };
@@ -138,6 +142,13 @@ class ShipmentFormRequest extends FormRequest
 
                 'shipmentDistance.required' => 'حقل مسافة الشحنة مطلوب',
                 'shipmentDistance.numeric' => 'مسافة الشحنة يجب أن تكون رقماً',
+            ],
+            'respond_to_request' => [
+                'user_id.required' => 'حقل رقم المستخدم مطلوب',
+                'user_id.exists' => 'المستخدم غير موجود',
+
+                'action.required' => 'حقل الإجراء مطلوب',
+                'action.boolean' => 'قيمة الإجراء يجب أن تكون 0 أو 1',
             ],
 
             default => [],

@@ -70,6 +70,14 @@ class ShipmentController extends Controller
             'message' => $result,
         ]);
     }
-    
+
+    public function respond_to_request(ShipmentFormRequest $request)
+    {
+        $result = $this->shipmentService->respond_to_request($request->validated());
+
+        return response()->json([
+            'message' => $result
+        ]);
+    } 
   
 }

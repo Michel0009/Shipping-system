@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/reviews', [ReviewController::class, 'get_driver_reviews']);
 
+    Route::post('/shipment/respond', [ShipmentController::class, 'respond_to_request']);
+
   });
 
   // Admin Routes

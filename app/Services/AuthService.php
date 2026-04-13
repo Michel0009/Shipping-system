@@ -111,8 +111,9 @@ class AuthService
         $token = $user->createToken('AccessToken')->plainTextToken;
         $user->number_of_logins = $user->number_of_logins + 1;
         $this->userRepository->save($user);
+        $refreshToken = $this->generate_refresh_token($user);
 
-        return ['token' => $token];
+        return ['token' => $token, 'refresh_token' => $refreshToken];
       }
       return true;
     
@@ -156,6 +157,7 @@ class AuthService
         return "same_old_password";
     }
     $user->password = $request['new_password'];
+    $user->number_of_change_password = $user->number_of_change_password + 1;
     $this->userRepository->save($user);
 
     Cache::forget("reset_token_".$user->id);
@@ -182,7 +184,7 @@ class AuthService
       }
 
       $first_login_driver = false;
-      if ($user['role_id'] == 4 && $user['number_of_logins'] == 0) {
+      if ($user['role_id'] == 4 && $user['number_of_change_password'] == 0) {
         $first_login_driver = true;
         $this->send_email($user->email);
       } 
@@ -190,10 +192,12 @@ class AuthService
       $token = $user->createToken('AccessToken')->plainTextToken;
       $user->number_of_logins = $user->number_of_logins + 1;
       $this->userRepository->save($user);
+      $refreshToken = $this->generate_refresh_token($user);
 
       $responseData = [
         'message' => 'مرحباً بك',
         'token' => $token,
+        'refresh_token' => $refreshToken,
         'role' => $user->role->name,
         'first_login_for_driver' => $first_login_driver,
       ];
@@ -205,7 +209,57 @@ class AuthService
 
   public function logout()
   {
+    $this->userRepository->revoke_user_tokens(auth()->id());
     Auth::user()->currentAccessToken()->delete();
+  }
+
+  private function generate_refresh_token($user)
+  {
+      $refreshToken = Str::random(64);
+
+      $this->userRepository->create_refresh_token(
+          $user->id,
+          $refreshToken,
+          now()->addMonth()
+      );
+
+      return $refreshToken;
+  }
+
+  public function refresh($refresh_token)
+  {
+      $refreshToken = $this->userRepository->find_refresh_token($refresh_token);
+
+      if (
+          !$refreshToken ||
+          $refreshToken->is_revoked ||
+          $refreshToken->expires_at->isPast()
+      ) {
+          return false;
+      }
+
+      $user = $this->userRepository->find_user($refreshToken->user_id);
+
+      if ($user->status == 3) {
+          return 'banned';
+      }
+      if ($user->status == 2) {
+          return 'frozen';
+      }
+      // New Access 
+      $newAccessToken = $user->createToken('AccessToken')->plainTextToken;
+      $response = [
+         'access_token' => $newAccessToken,
+      ];
+      // New Refresh 
+      if ($refreshToken->expires_at->diffInDays(now()) <= 3) {
+
+        $this->userRepository->revoke_token($refreshToken);
+        $newRefreshToken = $this->generate_refresh_token($user);
+        $response['refresh_token'] = $newRefreshToken;
+    }
+
+      return $response;
   }
 
 

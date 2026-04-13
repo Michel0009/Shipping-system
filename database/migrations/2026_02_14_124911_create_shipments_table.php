@@ -34,9 +34,11 @@ return new class extends Migration
             $table->decimal('end_position_lng', 11, 8);
             $table->unsignedBigInteger('price');
             $table->string('pin',6);
+            $table->string('qr_pin');
             $table->string('status');
             $table->boolean('success');
             $table->timestamp('delivery_deadline');
+            $table->boolean('paid')->default(false);
             $table->timestamps();
         });
     }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AuthFormRequest;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
-
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -49,10 +49,30 @@ class AuthController extends Controller
                 'message' => 'رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى'
             ], 400);
         }
-        return response()->json([
+        $response = [
             'message' => 'تم التحقق من بريدك الإلكتروني بنجاح',
             'token' => $success['token'] ?? null ,
-        ], 200);
+            'refresh_token' => $success['refresh_token'] ?? null
+        ];
+
+        $remember = filter_var(
+            $request->header('X-Remember-Me'),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        $isWeb = $request->hasHeader('X-Remember-Me');
+         // Mobile
+        if (!$isWeb || $response['refresh_token'] == null) {
+            return response()->json($response);
+        }
+        // Web
+        $minutes = $remember ? 60 * 24 * 30 : 60 * 24;
+
+        $cookie = cookie(
+            'refresh_token', $response['refresh_token'], $minutes, '/', null, true, true, false, 'Strict'
+        );
+
+        return response()->json($response)->withCookie($cookie);
     }
 
     public function new_password_verification(AuthFormRequest $request): JsonResponse
@@ -103,8 +123,24 @@ class AuthController extends Controller
             return response()->json(['message' => 
                 'البريد الإلكتروني لا يتطابق مع كلمة المرور، يرجى المحاولة مرة أخرى'],401);
         }
+        $remember = filter_var(
+            $request->header('X-Remember-Me'),
+            FILTER_VALIDATE_BOOLEAN
+        );
 
-        return response()->json($result, 200);
+        $isWeb = $request->hasHeader('X-Remember-Me');
+         // Mobile
+        if (!$isWeb) {
+            return response()->json($result);
+        }
+        // Web
+        $minutes = $remember ? 60 * 24 * 30 : 60 * 24;
+
+        $cookie = cookie(
+            'refresh_token', $result['refresh_token'], $minutes, '/', null, true, true, false, 'Strict'
+        );
+
+        return response()->json($result)->withCookie($cookie);
     }
 
     public function logout(): JsonResponse
@@ -114,6 +150,44 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'تم تسجيل الخروج بنجاح'
         ]);
+    }
+
+    public function refresh(Request $request)
+    {
+        $isWeb = $request->hasHeader('X-Remember-Me');
+
+        $refreshToken = $isWeb
+            ? $request->cookie('refresh_token')
+            : $request->input('refresh_token');
+
+        $result = $this->authService->refresh($refreshToken);
+
+        if ($result === 'banned') {
+            return response()->json(['message' => 'banned'], 403);
+        }
+
+        if ($result === 'frozen') {
+            return response()->json(['message' => 'frozen'], 403);
+        }
+
+        if (!$result) {
+            return response()->json(['message' => 'Invalid refresh token'], 401);
+        }
+
+        // Mobile
+        if (!$isWeb) {
+            return response()->json($result);
+        }
+
+        // Web
+        if (isset($result['refresh_token'])) {
+            $minutes = 60 * 24 * 30;
+            $cookie = cookie(
+                'refresh_token', $result['refresh_token'], $minutes, '/', null, true, true, false, 'Strict'
+            );
+
+            return response()->json($result)->withCookie($cookie);
+        }
     }
   
 }

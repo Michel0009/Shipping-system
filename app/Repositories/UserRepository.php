@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use App\Models\Refresh_token;
 
 class UserRepository
 {
@@ -59,6 +60,31 @@ class UserRepository
 
         })
         ->delete();
+    }
+
+    public function create_refresh_token($userId, $token, $expiresAt)
+    {
+        return Refresh_token::create([
+            'user_id' => $userId,
+            'token' => hash('sha256', $token),
+            'expires_at' => $expiresAt,
+        ]);
+    }
+
+    public function find_refresh_token($token)
+    {
+        return Refresh_token::where('token', hash('sha256', $token))->first();
+    }
+
+    public function revoke_user_tokens($userId)
+    {
+        Refresh_token::where('user_id', $userId)
+            ->update(['is_revoked' => true]);
+    }
+
+    public function revoke_token($token)
+    {
+        $token->update(['is_revoked' => true]);
     }
 
 }

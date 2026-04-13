@@ -17,6 +17,7 @@ Route::post('/newPasswordVerification', [AuthController::class, 'new_password_ve
 Route::post('/reSetPassword', [AuthController::class, 'reset_password']);
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/refreshToken', [AuthController::class, 'refresh']);
 
 Route::middleware('auth:sanctum')->group(function () {
 

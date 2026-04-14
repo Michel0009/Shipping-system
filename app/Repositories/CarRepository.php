@@ -46,5 +46,12 @@ class CarRepository
     {
         return $this->vehicle_type->get();
     }
+    public function get_car_files($car)
+    {
+        $car_paper = $car->car_paper()->select('id', 'car_license_file')->get();
 
+        return [
+            'car_paper' => $car_paper,
+        ];
+    }
 }

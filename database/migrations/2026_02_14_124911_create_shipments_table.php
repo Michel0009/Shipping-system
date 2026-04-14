@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('pin',6);
             $table->string('status');
             $table->boolean('success');
+            $table->timestamp('delivery_deadline');
             $table->timestamps();
         });
     }

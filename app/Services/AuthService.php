@@ -21,7 +21,6 @@ class AuthService
 
   public function user_Register(array $request)
   {
-    // $user_number = rand(10000000, 99999999);
     $user_number = app(\App\Services\UserService::class)->generate_user_number();
     
     $user = $this->userRepository->create([
@@ -42,7 +41,7 @@ class AuthService
   public function send_email(string $email)
   {
     $user = $this->userRepository->find_by_email($email);
-    if (!$user) return;
+    if (!$user) return false;
 
     $code = rand(100000, 999999);
 
@@ -92,6 +91,7 @@ class AuthService
     Cache::put($user->id, $code, now()->addMinutes(3));
 
     SendEmailJob::dispatch($user->email, $emailBody, $subject);
+    return true;
   }
 
 
@@ -152,6 +152,9 @@ class AuthService
     if (!$storedToken || $storedToken !== $request['reset_token']) {
         return false;
     }
+    if (Hash::check($request['new_password'], $user->password)) {
+        return "same_old_password";
+    }
     $user->password = $request['new_password'];
     $this->userRepository->save($user);
 
@@ -171,13 +174,17 @@ class AuthService
       if ($user['role_id'] != 4 && $user['email_verified_at'] == null) {
         return 'unverified';
       }
-      if ($user['status'] != 0) {
+      if ($user['status'] == 3) {
         return 'banned';
+      }
+      if ($user['status'] == 2) {
+        return 'frozen';
       }
 
       $first_login_driver = false;
       if ($user['role_id'] == 4 && $user['number_of_logins'] == 0) {
         $first_login_driver = true;
+        $this->send_email($user->email);
       } 
 
       $token = $user->createToken('AccessToken')->plainTextToken;

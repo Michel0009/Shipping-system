@@ -10,6 +10,8 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
+use function Symfony\Component\Clock\now;
+
 class DriverService
 {
 
@@ -18,9 +20,12 @@ class DriverService
     protected $reviewRepository;
     protected $userRepository;
 
-    public function __construct(DriverRepository $driverRepository, CarRepository $carRepository,
-         ReviewRepository $reviewRepository, UserRepository $userRepository)
-    {
+    public function __construct(
+        DriverRepository $driverRepository,
+        CarRepository $carRepository,
+        ReviewRepository $reviewRepository,
+        UserRepository $userRepository
+    ) {
         $this->driverRepository = $driverRepository;
         $this->carRepository = $carRepository;
         $this->reviewRepository = $reviewRepository;
@@ -156,7 +161,8 @@ class DriverService
         return collect($result)->sortBy('distance_to_start_km')->values();
     }
 
-    public function get_driver_details($id){
+    public function get_driver_details($id)
+    {
 
         $driver = $this->driverRepository->find_driver($id);
         $user = $this->userRepository->find_user($driver->user_id);
@@ -171,33 +177,71 @@ class DriverService
 
         $car = $this->carRepository->find_by_driver_ID($id);
         $driver_governorates = $this->driverRepository->get_driver_governorates($driver)
-            ->makeHidden(['pivot','created_at','updated_at']);
+            ->makeHidden(['pivot', 'created_at', 'updated_at']);
 
         $average = $this->reviewRepository->get_driver_average_rate($id);
         $badge = $this->driverRepository->get_badge($driver);
 
         return [
-          'user' => $userData,
-          'car' => $car,
-          'driver_governorates' => $driver_governorates,
-          'average_rate' => round($average, 2),
-          'badge' => $badge,
+            'user' => $userData,
+            'car' => $car,
+            'driver_governorates' => $driver_governorates,
+            'average_rate' => round($average, 2),
+            'badge' => $badge,
         ];
     }
     public function get_drivers()
     {
-        $driversPaginator = $this->driverRepository->get_drivers();
-        $availableCount = $this->driverRepository->get_available_drivers_count();
-
-        return [
-            'available_drivers' => $availableCount,
-            'drivers'           => $driversPaginator
-        ];
+        $page = request('page', 1);
+        $cacheKey = "drivers_page_" . $page;
+        return Cache::tags(["driver_list"])->remember($cacheKey,900, function () {
+            $driversPaginator = $this->driverRepository->get_drivers();
+            $availableCount = $this->driverRepository->get_available_drivers_count();
+            return [
+                'available_drivers' => $availableCount,
+                'drivers'           => $driversPaginator
+            ];
+        });
     }
     public function get_driver_details_for_admin($id)
     {
-        $driver = $this->get_driver_details($id);
-        $shipments = $this->driverRepository->get_driver_shipments_by_id($id);
+        $ttl = 86400;
+
+        $driver =   Cache::remember(
+            "driver_{$id}_driver",
+            $ttl,
+            function () use ($id) {
+                return $this->driverRepository->find_driver($id);
+            }
+        );
+        $user = Cache::remember("driver_{$id}_user", $ttl, function () use ($driver) {
+            return $this->userRepository->find_user($driver->user_id);
+        });
+        $car = Cache::remember("driver_{$id}_car", $ttl, function () use ($id) {
+            return $this->carRepository->find_by_driver_ID($id);
+        });
+        $files = Cache::remember("driver_{$id}_docs", $ttl, function () use ($car, $driver) {
+            $carFiles=$this->carRepository->get_car_files($car);
+            $driverFiles=$this->driverRepository->get_driver_files($driver);
+            return [
+                'car_files' => $carFiles,
+                'driver_files' => $driverFiles
+            ];
+        });
+        $driver_governorates = Cache::remember("driver_{$id}_gov", $ttl, function () use ($driver) {
+            return $this->driverRepository->get_driver_governorates($driver)
+                ->makeHidden(['pivot', 'created_at', 'updated_at']);
+        });
+
+        $average_rate = Cache::remember("driver_{$id}_avg_rate",600, function () use ($id) {
+            return $this->reviewRepository->get_driver_average_rate($id);
+        });
+        $badge = Cache::remember("driver_{$id}_badge", $ttl, function () use ($driver) {
+            return $this->driverRepository->get_badge($driver);
+        });
+        $shipments = Cache::remember("driver_{$id}_shipments", 600, function () use ($id) {
+            return $this->driverRepository->get_driver_shipments_by_id($id);
+        });
         if ($shipments->isNotEmpty()) {
             $amountToPay = $shipments->sum('price');
             $amountToPay *= 0.15;

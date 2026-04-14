@@ -23,7 +23,8 @@ class Shipment extends Model
         'price',
         'pin',
         'status',
-        'success'
+        'success',
+        'delivery_deadline'
     ];
 
     public function user()

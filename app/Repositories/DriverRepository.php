@@ -8,6 +8,7 @@ use App\Models\Driver;
 use App\Models\Governorate;
 use App\Models\License;
 use App\Models\Unconvicted_paper;
+use Carbon\Carbon;
 
 class DriverRepository
 {
@@ -48,6 +49,11 @@ class DriverRepository
     public function get_governorates()
     {
         return Governorate::query()->select('id', 'name')->get();
+    }
+
+    public function find_governorate($id)
+    {
+        return Governorate::query()->where('id', $id)->first();
     }
 
     public function get_driver_governorates($driver)
@@ -118,7 +124,7 @@ class DriverRepository
     {
         $drivers = $this->driver
             ->with([
-                'user:id,first_name,last_name,email,phone_number',
+                'user:id,first_name,last_name,email,phone_number,user_number',
                 'car.vehicle_type:id,type'
             ])
             ->withAvg('reviews', 'rate')
@@ -133,7 +139,7 @@ class DriverRepository
                 'availability' => (bool) $driver->availability,
                 'vehicle_type' => $driver->car->vehicle_type->type,
                 'rating'       => number_format($driver->reviews_avg_rate, 2) ?? "0.00",
-                'shipments_count' => $driver->shipments_count ?? 0,
+                'user_number'  => $driver->user->user_number,
             ];
         });
     }
@@ -143,6 +149,9 @@ class DriverRepository
     }
     public function get_driver_shipments_by_id($id)
     {
+        $lastMonth = Carbon::now()->subMonth();
+        $start = $lastMonth->copy()->startOfMonth();
+        $end = $lastMonth->copy()->endOfMonth();
         $driver = $this->find_driver($id);
         return $driver->shipments()->get();
     }
@@ -151,5 +160,15 @@ class DriverRepository
         return $this->driver->whereHas('user', function ($query) use ($user_number) {
             $query->where('user_number', $user_number);
         })->first();
+    }
+    public function get_driver_files($driver)
+    {
+        $license = $driver->license()->select('id', 'license_file')->first();
+        $unconvicted_paper = $driver->unconvicted_paper()->select('id', 'uncovicted_file')->first();
+
+        return [
+            'license' => $license,
+            'unconvicted_paper' => $unconvicted_paper,
+        ];
     }
 }

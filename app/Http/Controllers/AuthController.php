@@ -29,7 +29,12 @@ class AuthController extends Controller
     public function send_email(AuthFormRequest $request): JsonResponse
     {
         $email = $request->validated()['email'];
-        $this->authService->send_email($email);
+        $result = $this->authService->send_email($email);
+
+        if (!$result) {
+            return response()->json(['message' => 
+                'البريد الإلكتروني غير صحيح، يرجى المحاولة مرة أخرى'],401);
+        }
 
         return response()->json([
             'message' => 'تم إرسال رمز التحقق إلى بريدك الإلكتروني، يرجى التحقق منه'
@@ -72,6 +77,9 @@ class AuthController extends Controller
                 'message' => 'رمز إعادة التعيين غير صالح أو منتهي'
             ], 401);
         }
+        if ($success === 'same_old_password') {
+            return response()->json(['message' => 'الرجاء تغيير كلمة المرور لكي تكون مختلفة عن كلمة المرور القديمة'],401);
+        }
         return response()->json([
             'message' => 'تم تغيير كلمة المرور بنجاح'
         ]);
@@ -87,6 +95,9 @@ class AuthController extends Controller
         }
         if ($result === 'banned') {
             return response()->json(['message' => 'تم حظر هذا الحساب، يرجى التواصل مع الإدارة'],403);
+        }
+        if ($result === 'frozen') {
+            return response()->json(['message' => 'تم تجميد هذا الحساب، يرجى دفع التكاليف المترتبة عليك'],403);
         }
         if (!$result) {
             return response()->json(['message' =>

@@ -34,7 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/availableDrivers',[DriverController::class,'available_drivers']);
     Route::get('/driver/{id}', [DriverController::class, 'get_driver_details']);
     Route::get('/shipment/extend', [ShipmentController::class, 'extend_shipment']);
-
+    Route::post('/shipment/send-to-driver', [ShipmentController::class, 'send_to_driver']);
     Route::post('/review', [ReviewController::class, 'create_review']);
   });
 
@@ -45,6 +45,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/governorate/detatch', [DriverController::class, 'detatch_governorate']);
 
     Route::get('/reviews', [ReviewController::class, 'get_driver_reviews']);
+
+    Route::post('/shipment/respond', [ShipmentController::class, 'respond_to_request']);
 
   });
 

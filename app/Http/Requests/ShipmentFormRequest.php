@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Rules\NoHtml;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
 class ShipmentFormRequest extends FormRequest
 {
@@ -51,6 +50,16 @@ class ShipmentFormRequest extends FormRequest
             'end_position_lng' => 'sometimes|numeric',
             'start_governorate_id' => 'sometimes|exists:governorates,id',
             'end_governorate_id' => 'sometimes|exists:governorates,id',
+        ],
+        'send_to_driver' => [
+            'driver_id' => 'required|exists:drivers,id',
+            'price' => 'required|numeric',
+            'distanceToStart' => 'required|numeric',
+            'shipmentDistance' => 'required|numeric',
+        ],
+        'respond_to_request' => [
+            'user_id' => 'required|exists:users,id',
+            'action' => 'required|boolean'
         ],
         
         default => [],
@@ -120,6 +129,26 @@ class ShipmentFormRequest extends FormRequest
 
                 'start_governorate_id.exists' => 'محافظة نقطة البداية غير موجودة',
                 'end_governorate_id.exists' => 'محافظة نقطة النهاية غير موجودة',
+            ],
+            'send_to_driver' => [
+                'driver_id.required' => 'حقل رقم السائق مطلوب',
+                'driver_id.exists' => 'رقم السائق غير موجود',
+
+                'price.required' => 'حقل السعر مطلوب',
+                'price.numeric' => 'السعر يجب أن يكون رقماً',
+
+                'distanceToStart.required' => 'حقل المسافة للبدء مطلوب',
+                'distanceToStart.numeric' => 'المسافة للبدء يجب أن تكون رقماً',
+
+                'shipmentDistance.required' => 'حقل مسافة الشحنة مطلوب',
+                'shipmentDistance.numeric' => 'مسافة الشحنة يجب أن تكون رقماً',
+            ],
+            'respond_to_request' => [
+                'user_id.required' => 'حقل رقم المستخدم مطلوب',
+                'user_id.exists' => 'المستخدم غير موجود',
+
+                'action.required' => 'حقل الإجراء مطلوب',
+                'action.boolean' => 'قيمة الإجراء يجب أن تكون 0 أو 1',
             ],
 
             default => [],

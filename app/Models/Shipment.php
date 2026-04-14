@@ -22,6 +22,7 @@ class Shipment extends Model
         'end_position_lng',
         'price',
         'pin',
+        'qr_pin',
         'status',
         'success',
         'delivery_deadline'

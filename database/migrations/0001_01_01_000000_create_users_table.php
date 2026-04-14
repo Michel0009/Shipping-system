@@ -25,6 +25,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('status')->default(0);
             $table->string('password');
             $table->unsignedInteger('number_of_logins')->default(0);
+            $table->unsignedInteger('number_of_change_password')->default(0);
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

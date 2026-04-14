@@ -188,6 +188,8 @@ class AuthController extends Controller
 
             return response()->json($result)->withCookie($cookie);
         }
+        
+        return response()->json($result);
     }
   
 }

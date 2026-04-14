@@ -252,7 +252,7 @@ class AuthService
          'access_token' => $newAccessToken,
       ];
       // New Refresh 
-      if ($refreshToken->expires_at->diffInDays(now()) <= 3) {
+      if ($refreshToken->expires_at <= now()->addDays(3)) {
 
         $this->userRepository->revoke_token($refreshToken);
         $newRefreshToken = $this->generate_refresh_token($user);

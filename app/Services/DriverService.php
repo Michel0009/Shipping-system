@@ -184,4 +184,25 @@ class DriverService
           'badge' => $badge,
         ];
     }
+
+    public function count_continuous_successful_shipments(){
+
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+
+        return $driver->continuous_successful_shipments;
+    }
+
+    public function set_driver_location(array $data)
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+        
+        Cache::put("location_driver_{$driver->id}", [
+            'lat' => $data['lat'],
+            'lng' => $data['lng']
+        ], now()->addHours(1));
+    
+        return true;
+    }
 }

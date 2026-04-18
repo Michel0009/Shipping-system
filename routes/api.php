@@ -49,7 +49,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reviews', [ReviewController::class, 'get_driver_reviews']);
 
     Route::post('/shipment/respond', [ShipmentController::class, 'respond_to_request']);
+    Route::post('/shipment/confirm-pickup', [ShipmentController::class, 'confirm_pickup']);
+    Route::post('/shipment/confirm-delivery', [ShipmentController::class, 'confirm_delivery']);
 
+    Route::get('/countContinuousSuccessfulShipments',[DriverController::class,'count_continuous_successful_shipments']);
+    Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
   });
 
   // Admin Routes

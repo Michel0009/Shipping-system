@@ -23,6 +23,10 @@ class DriverFormRequest extends FormRequest
         'detatch_governorate' => [
            'gov_id' => 'required|exists:governorates,id'
         ],
+        'set_driver_location' => [
+           'lat' => 'required|numeric',
+           'lng' => 'required|numeric'
+        ],
 
         default => [],
       };
@@ -39,6 +43,13 @@ class DriverFormRequest extends FormRequest
             'detatch_governorate' => [
                 'gov_id.required' => 'يجب تحديد المحافظة',
                 'gov_id.exists' => 'المحافظة غير موجودة',
+            ],
+            'set_driver_location' => [
+                'lat.required' => 'إحداثيات خط العرض مطلوبة',
+                'lat.numeric' => 'خط العرض يجب أن يكون رقماً',
+
+                'lng.required' => 'إحداثيات خط الطول مطلوبة',
+                'lng.numeric' => 'خط الطول يجب أن يكون رقماً',
             ],
 
             default => [],

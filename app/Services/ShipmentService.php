@@ -7,6 +7,7 @@ use App\Repositories\ShipmentRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class ShipmentService
 {
@@ -190,29 +191,128 @@ class ShipmentService
           Cache::forget($requestKey);
   
           app(\App\Services\NotificationService::class)->send_notification($data['user_id'],
-              'تم رفض طلب الشحنة من قبل السائق', 0, 'رفض الطلب', []
+              'تم رفض طلب الشحنة الذي قمت بإرساله من طرف السائق.', 0, 'رفض الطلب', []
           );
   
           return "تم رفض الطلب";
       }
       $shipmentNumber = time() . rand(100, 999);
       $pin = random_int(100000, 999999);
+      $qrPin = Str::uuid()->toString();
   
       $shipment = $this->shipmentRepository->create(
-          $request,
-          $shipmentNumber,
-          $pin
+          $request, $shipmentNumber, $pin, $qrPin
       );
   
       Cache::forget($requestKey);
       Cache::forget("shipment_request_user_" . $data['user_id']);
   
+      $data_body = [
+            'id' => $shipment->id,
+            'shipment_number' => $shipment->shipment_number,
+            'status' => $shipment->status
+      ];
       app(\App\Services\NotificationService::class)->send_notification($data['user_id'],
-          "تم قبول طلب الشحنة بنجاح. يمكنك متابعتها الآن باستخدام رقم الشحنة {$shipmentNumber} المولّد.",
-           $shipment->id, 'قبول الطلب', $shipment
+          "تم قبول طلب الشحنة خاصتك. يمكنك متابعتها الآن باستخدام رقم الشحنة {$shipmentNumber} المولّد.",
+           $shipment->id, 'قبول الطلب', $data_body
       );
 
       return "تم قبول الطلب وإنشاء الشحنة";
+  }
+
+  public function confirm_pickup(array $data)
+  {
+      $user = Auth::user();
+      $driver = $this->driverRepository->find_by_user_ID($user->id);
+  
+      $shipment = $this->shipmentRepository->find_shipment($data['shipment_id']);
+  
+      if ($shipment->driver_id !== $driver->id) {
+          return [
+              'message' => "غير مصرح لك بهذه الشحنة",
+              'status_code' => 403
+          ];
+      }
+  
+      if ($shipment->qr_pin !== $data['qr_pin']) {
+          return [
+              'message' => "الرمز غير صحيح",
+              'status_code' => 401
+          ];
+      }
+  
+      if ($shipment->status !== 'جارية') {
+          return [
+              'message' => "لا يمكن تأكيد الاستلام في هذه الحالة",
+              'status_code' => 401
+          ];
+      }
+  
+      $shipment->status = 'قيد التوصيل';  
+      $this->shipmentRepository->save($shipment);
+  
+      return [
+          'message' => "تم استلام الشحنة وبدء التوصيل",
+          'status_code' => 200
+      ];
+  }
+
+  public function confirm_delivery(array $data)
+  {
+      $user = Auth::user();
+      $driver = $this->driverRepository->find_by_user_ID($user->id);
+  
+      $shipment = $this->shipmentRepository->find_shipment($data['shipment_id']);
+  
+      if ($shipment->driver_id !== $driver->id) {
+          return [
+              'message' => "غير مصرح لك بهذه الشحنة",
+              'status_code' => 403
+          ];
+      }
+  
+      if ($shipment->pin !== $data['pin']) {
+          return [
+              'message' => "رمز التحقق غير صحيح",
+              'status_code' => 401
+          ];
+      }
+  
+      if ($shipment->status !== 'قيد التوصيل' && $shipment->status !== 'جارية') {
+          return [
+              'message' => "لا يمكن تأكيد الاستلام في هذه الحالة",
+              'status_code' => 401
+          ];
+      }
+  
+      if (now()->greaterThan($shipment->delivery_deadline)) {
+          return [
+              'message' => "انتهت مهلة تأكيد التسليم",
+              'status_code' => 401
+          ];
+      }
+  
+      $shipment->status = 'مستلمة';
+      $shipment->success = true;  
+      $this->shipmentRepository->save($shipment);
+
+      $driver->continuous_successful_shipments = $driver->continuous_successful_shipments + 1;
+      $this->driverRepository->save($driver);
+
+      $data_body = [
+            'id' => $shipment->id,
+            'shipment_number' => $shipment->shipment_number,
+            'status' => $shipment->status
+      ];
+      app(\App\Services\NotificationService::class)->send_notification($shipment->user_id,
+          "تم تأكيد استلام الشحنة ذات الرقم {$shipment->shipment_number} بنجاح.. يمكنك الآن تقييم خدمة السائق بإيصال شحنتك.",
+           $shipment->id, 'تأكيد استلام الشحنة', $data_body
+      );
+  
+      return [
+          'message' => "تم تسليم الشحنة بنجاح",
+          'status_code' => 200
+      ];
   }
 
 }

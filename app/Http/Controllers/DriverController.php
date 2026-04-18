@@ -64,4 +64,22 @@ class DriverController extends Controller
 
         return response()->json($driver);
     }
+
+    public function count_continuous_successful_shipments()
+    {
+        $count = $this->driverService->count_continuous_successful_shipments();
+
+        return response()->json([
+            'count' => $count
+        ]);
+    }
+
+    public function set_driver_location(DriverFormRequest $request)
+    {
+        $this->driverService->set_driver_location($request->validated());
+
+        return response()->json([
+            'message' => 'تم تحديث موقع السائق'
+        ]);
+    }
 }

@@ -79,7 +79,7 @@ class SendFcmNotification implements ShouldQueue
            $json = $response->json();
             if (!empty($json['error']['details'][0]['errorCode']) 
                 && $json['error']['details'][0]['errorCode'] === 'INVALID_ARGUMENT') {
-                // app(\App\Repositories\NotificationRepository::class)->delete_token($this->token);
+                app(\App\Repositories\NotificationRepository::class)->delete_token($this->token);
                 Log::info("Deleted invalid FCM token", ['token' => $this->token]);
             }
         }

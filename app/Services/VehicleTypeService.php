@@ -46,4 +46,28 @@ class VehicleTypeService
       return $this->carRepository->get_vehicle_types();
   }
 
+  public function create_coefficient(array $data)
+  {
+      $coefficient = [
+          'name' => $data['name'],
+          'type' => 'fuel_price',
+          'value' => $data['value'],
+      ];
+
+      $this->carRepository->create_coefficient($coefficient);
+  }
+
+  public function update_coefficient(array $data)
+  {
+      $coefficient = [
+          'value' => $data['value'],
+      ];
+      $this->carRepository->update_coefficient($coefficient, $data['coefficient_id']);
+  }
+
+  public function get_coefficients()
+  {
+      return $this->carRepository->get_coefficients();
+  }
+
 }

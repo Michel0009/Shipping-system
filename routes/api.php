@@ -61,6 +61,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicleType/create', [VehicleTypeController::class, 'create_vehicle_type']);
     Route::put('/vehicleType/update/{id}', [VehicleTypeController::class, 'update_vehicle_type']);
 
+    Route::post('/coefficient/create', [VehicleTypeController::class, 'create_coefficient']);
+    Route::put('/coefficient/update', [VehicleTypeController::class, 'update_coefficient']);
+    Route::get('/coefficients', [VehicleTypeController::class, 'get_coefficients']);
+    
   });
 
   // Employee-Admin Routes

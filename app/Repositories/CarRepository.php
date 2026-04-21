@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Car;
 use App\Models\Car_paper;
+use App\Models\Coefficient;
 use App\Models\Vehicle_type;
 
 class CarRepository
@@ -11,11 +12,13 @@ class CarRepository
     protected $car;
     protected $car_paper;
     protected $vehicle_type;
-    public function __construct(Car $car, Car_paper $car_paper, Vehicle_type $vehicle_type)
+    protected $coefficient;
+    public function __construct(Car $car, Car_paper $car_paper, Vehicle_type $vehicle_type, Coefficient $coefficient)
     {
         $this->car = $car;
         $this->car_paper = $car_paper;
         $this->vehicle_type = $vehicle_type;
+        $this->coefficient = $coefficient;
     }
     public function create(array $data): Car
     {
@@ -56,7 +59,22 @@ class CarRepository
         $car->update($data);
     }
     public function update_car_paper($paperId, array $data){
-        $carPaper= $this->car->find($paperId);
+        $carPaper= $this->car_paper->find($paperId);
         $carPaper->update($data);
     }
+    public function create_coefficient(array $data)
+    {
+        return $this->coefficient->create($data);
+    }
+
+    public function update_coefficient(array $data, $coefficient_id)
+    {
+        return $this->coefficient->where('id', $coefficient_id)->update($data);
+    }
+
+    public function get_coefficients()
+    {
+        return $this->coefficient->get();
+    }
+
 }

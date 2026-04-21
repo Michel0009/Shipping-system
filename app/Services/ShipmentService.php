@@ -7,212 +7,347 @@ use App\Repositories\ShipmentRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class ShipmentService
 {
 
-  protected $driverRepository;
-  protected $shipmentRepository;
+    protected $driverRepository;
+    protected $shipmentRepository;
 
-  public function __construct(DriverRepository $driverRepository, ShipmentRepository $shipmentRepository)
-  {
-      $this->driverRepository = $driverRepository;
-      $this->shipmentRepository = $shipmentRepository;
-  }
+    public function __construct(DriverRepository $driverRepository, ShipmentRepository $shipmentRepository)
+    {
+        $this->driverRepository = $driverRepository;
+        $this->shipmentRepository = $shipmentRepository;
+    }
 
-  public function create_shipment(array $data)
-  {
-      $user = Auth::user();
-      $cacheKey = "shipment_request_user_" . $user->id;
-      $expiresAt = now()->addHour();
+    public function create_shipment(array $data)
+    {
+        $user = Auth::user();
+        $cacheKey = "shipment_request_user_" . $user->id;
+        $expiresAt = now()->addHour();
 
-      $payload = [
-          'user_id' => $user->id,
-          'weight' => $data['weight'],
-          'height' => $data['height'],
-          'width' => $data['width'],
-          'length' => $data['length'],
-          'object' => $data['object'],
-          'insurance' => $data['insurance'],
-          'start_position_lat' => $data['start_position_lat'],
-          'start_position_lng' => $data['start_position_lng'],
-          'end_position_lat' => $data['end_position_lat'],
-          'end_position_lng' => $data['end_position_lng'],
-          'start_governorate_id' => $data['start_governorate_id'],
-          'end_governorate_id' => $data['end_governorate_id'],
-          'expires_at' => $expiresAt
-      ];
+        $payload = [
+            'user_id' => $user->id,
+            'weight' => $data['weight'],
+            'height' => $data['height'],
+            'width' => $data['width'],
+            'length' => $data['length'],
+            'object' => $data['object'],
+            'insurance' => $data['insurance'],
+            'start_position_lat' => $data['start_position_lat'],
+            'start_position_lng' => $data['start_position_lng'],
+            'end_position_lat' => $data['end_position_lat'],
+            'end_position_lng' => $data['end_position_lng'],
+            'start_governorate_id' => $data['start_governorate_id'],
+            'end_governorate_id' => $data['end_governorate_id'],
+            'expires_at' => $expiresAt
+        ];
 
-      $added = Cache::add($cacheKey, $payload, $expiresAt);
-      if (!$added) {
-          throw new \Exception('لديك طلب شحنة قيد المعالجة بالفعل');
-      }
+        $added = Cache::add($cacheKey, $payload, $expiresAt);
+        if (!$added) {
+            abort(409, 'لديك طلب شحنة قيد المعالجة بالفعل');
+        }
 
-      return $payload;
-  }
+        return $payload;
+    }
 
-  public function get_shipment_request()
-  {
-      $user = Auth::user();
+    public function get_shipment_request()
+    {
+        $user = Auth::user();
 
-      $cacheKey = "shipment_request_user_" . $user->id;
-      $shipment = Cache::get($cacheKey);
+        $cacheKey = "shipment_request_user_" . $user->id;
+        $shipment = Cache::get($cacheKey);
 
-      if (!$shipment) {
-          throw new \Exception('لا يوجد طلب شحنة حالياً');
-      }
-      return $shipment;
-  }
+        if (!$shipment) {
+            abort(404, 'لا يوجد طلب شحنة حالياً');
+        }
+        return $shipment;
+    }
 
-  public function delete_shipment_request()
-  {
-      $user = Auth::user();
+    public function delete_shipment_request()
+    {
+        $user = Auth::user();
 
-      $cacheKey = "shipment_request_user_" . $user->id;
+        $cacheKey = "shipment_request_user_" . $user->id;
 
-      if (!Cache::has($cacheKey)) {
-          throw new \Exception('لا يوجد طلب شحنة لحذفه');
-      }
-      Cache::forget($cacheKey);
+        if (!Cache::has($cacheKey)) {
+            abort(404, 'لا يوجد طلب شحنة لحذفه');
+        }
+        Cache::forget($cacheKey);
 
-      return true;
-  }
+        return true;
+    }
 
-  public function update_shipment_request(array $data)
-  {
-      $user = Auth::user();
+    public function update_shipment_request(array $data)
+    {
+        $user = Auth::user();
 
-      $cacheKey = "shipment_request_user_" . $user->id;
-      $shipment = Cache::get($cacheKey);
+        $cacheKey = "shipment_request_user_" . $user->id;
+        $shipment = Cache::get($cacheKey);
 
-      if (!$shipment) {
-          throw new \Exception('لا يوجد طلب شحنة لتعديله');
-      }
+        if (!$shipment) {
+            abort(404, 'لا يوجد طلب شحنة لتعديله');
+        }
 
-      $updatedShipment = array_merge($shipment, $data);
+        $updatedShipment = array_merge($shipment, $data);
 
-      Cache::put($cacheKey, $updatedShipment, $shipment['expires_at']);
+        Cache::put($cacheKey, $updatedShipment, $shipment['expires_at']);
 
-      return $updatedShipment;
-  }
+        return $updatedShipment;
+    }
 
-  public function extend_shipment_request()
-  {
-      $cacheKey = "shipment_request_user_" . auth()->id();
+    public function extend_shipment_request()
+    {
+        $cacheKey = "shipment_request_user_" . auth()->id();
 
-      $shipment = Cache::get($cacheKey);
+        $shipment = Cache::get($cacheKey);
 
-      if (!$shipment) {
-          throw new \Exception('لا يوجد طلب شحنة');
-      }
+        if (!$shipment) {
+            abort(404, 'لا يوجد طلب شحنة');
+        }
 
-      $expiresAt = $shipment['expires_at'];
+        $expiresAt = $shipment['expires_at'];
 
-      // الوقت المتبقي
-      $remaining = now()->diffInSeconds($expiresAt);
+        // الوقت المتبقي
+        $remaining = now()->diffInSeconds($expiresAt);
 
-      // تمديد ساعة
-      $newExpiresAt = now()->addHour();
+        // تمديد ساعة
+        $newExpiresAt = now()->addHour();
 
-      $shipment['expires_at'] = $newExpiresAt;
+        $shipment['expires_at'] = $newExpiresAt;
 
-      Cache::put($cacheKey, $shipment, $newExpiresAt);
+        Cache::put($cacheKey, $shipment, $newExpiresAt);
 
-      return [
-          'remaining_minutes_before' => round($remaining / 60),
-          'remaining_minutes_after' => 60
-      ];
-  }
+        return [
+            'remaining_minutes_before' => round($remaining / 60),
+            'remaining_minutes_after' => 60
+        ];
+    }
 
-  public function send_to_driver(array $data)
-  {
-      $user = Auth::user();
+    public function send_to_driver(array $data)
+    {
+        $user = Auth::user();
 
-      $shipmentKey = "shipment_request_user_" . $user->id;
-      $shipment = Cache::get($shipmentKey);
+        $shipmentKey = "shipment_request_user_" . $user->id;
+        $shipment = Cache::get($shipmentKey);
 
-      if (!$shipment) {
-          throw new Exception('لا يوجد طلب شحنة');
-      }
-      $driver = $this->driverRepository->find_driver($data['driver_id']);
+        if (!$shipment) {
+            abort(404, 'لا يوجد طلب شحنة');
+        }
+        $driver = $this->driverRepository->find_driver($data['driver_id']);
 
-      if (!$driver->availability) {
-          return "هذا السائق غير متاح حاليا";
-      }
+        if (!$driver->availability) {
+            return [
+                'message' => "هذا السائق غير متاح حاليا",
+                'status_code' => 401
+            ];
+        }
 
-      $startGov = $this->driverRepository->find_governorate($shipment['start_governorate_id']);
-      $endGov = $this->driverRepository->find_governorate($shipment['end_governorate_id']);
-      $shipment['start_governorate'] = $startGov->name;
-      $shipment['end_governorate'] = $endGov->name;
+        $startGov = $this->driverRepository->find_governorate($shipment['start_governorate_id']);
+        $endGov = $this->driverRepository->find_governorate($shipment['end_governorate_id']);
+        $shipment['start_governorate'] = $startGov->name;
+        $shipment['end_governorate'] = $endGov->name;
 
-      $requestKey = "driver_request_{$driver->id}_user_{$user->id}";
-      $expiresAt = now()->addMinutes(10);
+        $userRequestPattern = "*driver_request_*_user_{$user->id}";
+        $existingRequests = collect(Cache::getRedis()->keys($userRequestPattern));
 
-      $payload = [
-          'user_id' => $user->id,
-          'driver_id' => $driver->id,
-          'price' => $data['price'],
-          'distance_to_start' => $data['distanceToStart'],
-          'shipment_distance' => $data['shipmentDistance'],
-          'shipment' => $shipment,
-          'expires_at' => $expiresAt
-      ];
+        if ($existingRequests->isNotEmpty()) {
+            return [
+                'message' => "لديك طلب قيد الانتظار مع سائق آخر",
+                'status_code' => 409
+            ];
+        }
 
-      $added = Cache::add($requestKey, $payload, $expiresAt);
+        $requestKey = "driver_request_{$driver->id}_user_{$user->id}";
+        $expiresAt = now()->addMinutes(10);
 
-      if (!$added) {
-        // Cache::forget($requestKey);
-          return "تم إرسال طلب لهذا السائق مسبقاً";
-      }
+        $payload = [
+            'user_id' => $user->id,
+            'driver_id' => $driver->id,
+            'price' => $data['price'],
+            'distance_to_start' => $data['distanceToStart'],
+            'shipment_distance' => $data['shipmentDistance'],
+            'shipment' => $shipment,
+            'expires_at' => $expiresAt
+        ];
 
-      app(\App\Services\NotificationService::class)->send_notification($driver->user_id,
-          'لديك طلب شحنة جديد. الرجاء التحقق منه والتعامل معه', 0, 'طلب شحنة جديد', $payload
-      );
+        $added = Cache::add($requestKey, $payload, $expiresAt);
 
-      return "تم إرسال الطلب إلى السائق";
-  }
+        if (!$added) {
+            // Cache::forget($requestKey);
+            return [
+                'message' => "تم إرسال طلب لهذا السائق مسبقاً",
+                'status_code' => 401
+            ];
+        }
+
+        app(\App\Services\NotificationService::class)->send_notification(
+            $driver->user_id,
+            'لديك طلب شحنة جديد. الرجاء التحقق منه والتعامل معه',
+            0,
+            'طلب شحنة جديد',
+            $payload
+        );
+
+        return [
+            'message' => "تم إرسال الطلب إلى السائق",
+            'status_code' => 200
+        ];
+    }
 
 
-  public function respond_to_request(array $data)
-  {
-      $user = Auth::user();
-      $driver =  $this->driverRepository->find_by_user_ID($user->id);
+    public function respond_to_request(array $data)
+    {
+        $user = Auth::user();
+        $driver =  $this->driverRepository->find_by_user_ID($user->id);
 
-      $requestKey = "driver_request_{$driver->id}_user_{$data['user_id']}";
-      $request = Cache::get($requestKey);
+        $requestKey = "driver_request_{$driver->id}_user_{$data['user_id']}";
+        $request = Cache::get($requestKey);
 
-      if (!$request) {
-          throw new Exception('انتهت صلاحية الطلب أو أنه غير موجود');
-      }
+        if (!$request) {
+            abort(404, 'انتهت صلاحية الطلب أو أنه غير موجود');
+        }
 
-      if (!$data['action']) {
+        if (!$data['action']) {
 
-          Cache::forget($requestKey);
+            Cache::forget($requestKey);
 
-          app(\App\Services\NotificationService::class)->send_notification($data['user_id'],
-              'تم رفض طلب الشحنة من قبل السائق', 0, 'رفض الطلب', []
-          );
+            app(\App\Services\NotificationService::class)->send_notification(
+                $data['user_id'],
+                'تم رفض طلب الشحنة الذي قمت بإرساله من طرف السائق.',
+                0,
+                'رفض الطلب',
+                []
+            );
 
-          return "تم رفض الطلب";
-      }
-      $shipmentNumber = time() . rand(100, 999);
-      $pin = random_int(100000, 999999);
+            return "تم رفض الطلب";
+        }
+        $shipmentNumber = time() . rand(100, 999);
+        $pin = random_int(100000, 999999);
+        $qrPin = Str::uuid()->toString();
 
-      $shipment = $this->shipmentRepository->create(
-          $request,
-          $shipmentNumber,
-          $pin
-      );
+        $shipment = $this->shipmentRepository->create(
+            $request,
+            $shipmentNumber,
+            $pin,
+            $qrPin
+        );
 
-      Cache::forget($requestKey);
-      Cache::forget("shipment_request_user_" . $data['user_id']);
+        Cache::forget($requestKey);
+        Cache::forget("shipment_request_user_" . $data['user_id']);
 
-      app(\App\Services\NotificationService::class)->send_notification($data['user_id'],
-          "تم قبول طلب الشحنة بنجاح. يمكنك متابعتها الآن باستخدام رقم الشحنة {$shipmentNumber} المولّد.",
-           $shipment->id, 'قبول الطلب', $shipment
-      );
+        $data_body = [
+            'id' => $shipment->id,
+            'shipment_number' => $shipment->shipment_number,
+            'status' => $shipment->status
+        ];
+        app(\App\Services\NotificationService::class)->send_notification(
+            $data['user_id'],
+            "تم قبول طلب الشحنة خاصتك. يمكنك متابعتها الآن باستخدام رقم الشحنة {$shipmentNumber} المولّد.",
+            $shipment->id,
+            'قبول الطلب',
+            $data_body
+        );
 
-      return "تم قبول الطلب وإنشاء الشحنة";
-  }
+        return "تم قبول الطلب وإنشاء الشحنة";
+    }
 
+    public function confirm_pickup(array $data)
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+
+        $shipment = $this->shipmentRepository->find_shipment($data['shipment_id']);
+
+        if ($shipment->driver_id !== $driver->id) {
+            return [
+                'message' => "غير مصرح لك بهذه الشحنة",
+                'status_code' => 403
+            ];
+        }
+
+        if ($shipment->qr_pin !== $data['qr_pin']) {
+            return [
+                'message' => "الرمز غير صحيح",
+                'status_code' => 401
+            ];
+        }
+
+        if ($shipment->status !== 'جارية') {
+            return [
+                'message' => "لا يمكن تأكيد الاستلام في هذه الحالة",
+                'status_code' => 401
+            ];
+        }
+
+        $shipment->status = 'قيد التوصيل';
+        $this->shipmentRepository->save($shipment);
+
+        return [
+            'message' => "تم استلام الشحنة وبدء التوصيل",
+            'status_code' => 200
+        ];
+    }
+
+    public function confirm_delivery(array $data)
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+
+        $shipment = $this->shipmentRepository->find_shipment($data['shipment_id']);
+
+        if ($shipment->driver_id !== $driver->id) {
+            return [
+                'message' => "غير مصرح لك بهذه الشحنة",
+                'status_code' => 403
+            ];
+        }
+
+        if ($shipment->pin !== $data['pin']) {
+            return [
+                'message' => "رمز التحقق غير صحيح",
+                'status_code' => 401
+            ];
+        }
+
+        if ($shipment->status !== 'قيد التوصيل' && $shipment->status !== 'جارية') {
+            return [
+                'message' => "لا يمكن تأكيد الاستلام في هذه الحالة",
+                'status_code' => 401
+            ];
+        }
+
+        if (now()->greaterThan($shipment->delivery_deadline)) {
+            return [
+                'message' => "انتهت مهلة تأكيد التسليم",
+                'status_code' => 401
+            ];
+        }
+
+        $shipment->status = 'مستلمة';
+        $shipment->success = true;
+        $this->shipmentRepository->save($shipment);
+
+        $driver->continuous_successful_shipments = $driver->continuous_successful_shipments + 1;
+        $this->driverRepository->save($driver);
+
+        $data_body = [
+            'id' => $shipment->id,
+            'shipment_number' => $shipment->shipment_number,
+            'status' => $shipment->status
+        ];
+        app(\App\Services\NotificationService::class)->send_notification(
+            $shipment->user_id,
+            "تم تأكيد استلام الشحنة ذات الرقم {$shipment->shipment_number} بنجاح.. يمكنك الآن تقييم خدمة السائق بإيصال شحنتك.",
+            $shipment->id,
+            'تأكيد استلام الشحنة',
+            $data_body
+        );
+
+        return [
+            'message' => "تم تسليم الشحنة بنجاح",
+            'status_code' => 200
+        ];
+    }
 }

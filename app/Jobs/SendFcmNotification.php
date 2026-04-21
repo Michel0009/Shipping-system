@@ -64,7 +64,9 @@ class SendFcmNotification implements ShouldQueue
                  ]
             ]
         ];
-
+        Log::info("FCM-- body--::", [
+            'body' => $body
+        ]);
         $response = Http::withToken($accessToken)
             ->post($url, $body);
 

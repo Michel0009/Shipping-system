@@ -17,7 +17,7 @@ class CarPaperObserver
     /**
      * Handle the Car_paper "deleted" event.
      */
-    public function deleted(Car_paper $car_paper): void
+    public function updated(Car_paper $car_paper): void
     {
         Cache::forget("driver_{$car_paper->car->driver_id}_docs");
     }

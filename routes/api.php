@@ -21,10 +21,12 @@ Route::post('/refreshToken', [AuthController::class, 'refresh']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
+
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/governorates', [DriverController::class, 'governorates']);
     Route::get('/profile', [UserController::class, 'get_profile']);
     Route::get('/vehicleTypes', [VehicleTypeController::class, 'vehicle_types']);
+    Route::get('/driverImage/{id}', [DriverController::class, 'get_driver_image']);
 
     // Client Routes
     Route::middleware('role:client')->group(function () {
@@ -47,13 +49,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/reviews', [ReviewController::class, 'get_driver_reviews']);
 
+
         Route::post('/shipment/respond', [ShipmentController::class, 'respond_to_request']);
+        Route::post('/shipment/confirm-pickup', [ShipmentController::class, 'confirm_pickup']);
+        Route::post('/shipment/confirm-delivery', [ShipmentController::class, 'confirm_delivery']);
+
+        Route::get('/countContinuousSuccessfulShipments', [DriverController::class, 'count_continuous_successful_shipments']);
+        Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
     });
 
     // Admin Routes
     Route::middleware('role:admin')->group(function () {
         Route::post('/vehicleType/create', [VehicleTypeController::class, 'create_vehicle_type']);
         Route::put('/vehicleType/update/{id}', [VehicleTypeController::class, 'update_vehicle_type']);
+
+        Route::post('/coefficient/create', [VehicleTypeController::class, 'create_coefficient']);
+        Route::put('/coefficient/update', [VehicleTypeController::class, 'update_coefficient']);
+        Route::get('/coefficients', [VehicleTypeController::class, 'get_coefficients']);
     });
 
     // Employee-Admin Routes

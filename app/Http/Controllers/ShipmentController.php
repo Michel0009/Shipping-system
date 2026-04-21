@@ -67,8 +67,8 @@ class ShipmentController extends Controller
         $result = $this->shipmentService->send_to_driver($request->validated());
 
         return response()->json([
-            'message' => $result,
-        ]);
+            'message' => $result['message'],
+        ], $result['status_code']);
     }
 
     public function respond_to_request(ShipmentFormRequest $request)
@@ -79,5 +79,23 @@ class ShipmentController extends Controller
             'message' => $result
         ]);
     } 
+
+    public function confirm_pickup(ShipmentFormRequest $request)
+    {
+        $result = $this->shipmentService->confirm_pickup($request->validated());
+
+        return response()->json([
+            'message' => $result['message']
+        ], $result['status_code']);
+    }
+
+    public function confirm_delivery(ShipmentFormRequest $request)
+    {
+        $result = $this->shipmentService->confirm_delivery($request->validated());
+
+        return response()->json([
+            'message' => $result['message']
+        ], $result['status_code']);
+    }
   
 }

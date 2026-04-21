@@ -14,7 +14,7 @@ class ShipmentRepository
         $this->shipment = $shipment;
     }
 
-    public function create(array $request, $shipmentNumber, $pin)
+    public function create(array $request, $shipmentNumber, $pin, $qrPin)
     {
         $shipmentData = $request['shipment'];
 
@@ -34,14 +34,17 @@ class ShipmentRepository
             'end_position_lng' => $shipmentData['end_position_lng'],
             'price' => $request['price'],
             'pin' => $pin,
+            'qr_pin' => $qrPin,
             'status' => 'جارية',
             'success' => false,
             'delivery_deadline' => now()->addDay(),
         ]);
 
         $shipment->governorates()->attach([
-            $shipmentData['start_governorate_id'] => ['start_end' => 'start'],
-            $shipmentData['end_governorate_id'] => ['start_end' => 'end'],
+            $shipmentData['start_governorate_id'] => ['start_end' => 'start']
+        ]);
+        $shipment->governorates()->attach([
+            $shipmentData['end_governorate_id'] => ['start_end' => 'end']
         ]);
 
         return $shipment;

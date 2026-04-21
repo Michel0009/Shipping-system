@@ -170,6 +170,8 @@ class DriverService
     {
 
         $driver = $this->driverRepository->find_driver($id);
+        if($driver == null) return ['message' => 'هذ السائق غير موجود'];
+
         $user = $this->userRepository->find_user($driver->user_id);
         $userData = [
             'user_id' => $user->id,
@@ -426,12 +428,22 @@ class DriverService
                     }
                 }
                 foreach ($storedCarPapers as $paper) {
-                    $carPapers = $this->carRepository->get_car_files($car);
+                    $carPapers = $this->carRepository->get_car_files($driver->car);
                     $existingPaper = $carPapers->firstWhere('type', $paper['type']);
                     $pathsToDelete[] = $existingPaper->car_file ?? null;
                     if ($existingPaper) {
                         $this->carRepository->update_car_paper($existingPaper->id, ['car_file' => $paper['car_file']]);
-                    } else {
+                    } else if (
+                        ($paper['type'] === 'ملكية' && $oppositePaper = $carPapers->firstWhere('type', 'اجار')) ||
+                        ($paper['type'] === 'اجار' && $oppositePaper = $carPapers->firstWhere('type', 'ملكية'))
+                    ) {
+                        $pathsToDelete[] = $oppositePaper->car_file;
+                        $this->carRepository->update_car_paper($oppositePaper->id, [
+                            'type' => $paper['type'],
+                            'car_file' => $paper['car_file']
+                        ]);
+                    }
+                    else {
                         $this->carRepository->create_car_paper([
                             'car_id' => $driver->car->id,
                             'type' => $paper['type'],
@@ -457,5 +469,46 @@ class DriverService
             }
             throw $e;
         }
+    }
+    public function get_driver_image($id)
+    {
+        $driver = $this->driverRepository->find_driver($id);
+
+        if (!$driver) {
+            return response()->json([
+                'message' => 'السائق غير موجود'
+            ], 404);
+        }
+
+        $path = storage_path('app/private/' . $driver->personal_picture);
+
+        if (!file_exists($path)) {
+            return response()->json([
+                'message' => 'الصورة غير موجودة'
+            ], 404);
+        }
+
+        return response()->file($path);
+    }
+
+    public function count_continuous_successful_shipments(){
+
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+
+        return $driver->continuous_successful_shipments;
+    }
+
+    public function set_driver_location(array $data)
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+
+        Cache::put("location_driver_{$driver->id}", [
+            'lat' => $data['lat'],
+            'lng' => $data['lng']
+        ], now()->addHours(1));
+
+        return true;
     }
 }

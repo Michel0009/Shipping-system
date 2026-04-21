@@ -88,4 +88,27 @@ class DriverController extends Controller
         $result = $this->driverService->update_driver($id, $validated);
         return response()->json(['message' => $result['message']], $result['code']);
     }
+
+    public function get_driver_image($id)
+    {
+        return $this->driverService->get_driver_image($id);
+    }
+
+    public function count_continuous_successful_shipments()
+    {
+        $count = $this->driverService->count_continuous_successful_shipments();
+
+        return response()->json([
+            'count' => $count
+        ]);
+    }
+
+    public function set_driver_location(DriverFormRequest $request)
+    {
+        $this->driverService->set_driver_location($request->validated());
+
+        return response()->json([
+            'message' => 'تم تحديث موقع السائق'
+        ]);
+    }
 }

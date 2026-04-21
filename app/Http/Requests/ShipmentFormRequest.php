@@ -61,6 +61,14 @@ class ShipmentFormRequest extends FormRequest
             'user_id' => 'required|exists:users,id',
             'action' => 'required|boolean'
         ],
+        'confirm_pickup' => [
+            'shipment_id' => 'required|exists:shipments,id',
+            'qr_pin' => 'required|string',
+        ],
+        'confirm_delivery' => [
+            'shipment_id' => 'required|exists:shipments,id',
+            'pin' => 'required|string|size:6',
+        ],
         
         default => [],
       };
@@ -149,6 +157,21 @@ class ShipmentFormRequest extends FormRequest
 
                 'action.required' => 'حقل الإجراء مطلوب',
                 'action.boolean' => 'قيمة الإجراء يجب أن تكون 0 أو 1',
+            ],
+            'confirm_pickup' => [
+                'shipment_id.required' => 'رقم الشحنة مطلوب',
+                'shipment_id.exists' => 'الشحنة غير موجودة',
+
+                'qr_pin.required' => 'رمز QR مطلوب',
+                'qr_pin.string' => 'رمز QR غير صالح',
+            ],
+            'confirm_delivery' => [
+                'shipment_id.required' => 'رقم الشحنة مطلوب',
+                'shipment_id.exists' => 'الشحنة غير موجودة',
+
+                'pin.required' => 'رمز التحقق مطلوب',
+                'pin.string' => 'رمز التحقق غير صالح',
+                'pin.size' => 'رمز التحقق يجب أن يكون مكون من 6 أرقام',
             ],
 
             default => [],

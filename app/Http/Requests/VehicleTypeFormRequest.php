@@ -54,6 +54,14 @@ class VehicleTypeFormRequest extends FormRequest
             'min_height' => 'sometimes|numeric|min:0',
             'max_height' => 'sometimes|numeric|min:0',
         ],
+        'create_coefficient' => [
+            'name' => ['required', 'string', 'max:255', new NoHtml],
+            'value' => 'required|numeric|gt:0',
+        ],
+        'update_coefficient' => [
+            'coefficient_id' => 'required|exists:coefficients,id',
+            'value' => 'required|numeric|gt:0',
+        ],
 
         default => [],
       };
@@ -77,6 +85,18 @@ class VehicleTypeFormRequest extends FormRequest
                 'numeric'    => '.حقل :attribute يجب أن يكون رقماً',
                 'gt' => '.حقل :attribute يجب أن يكون أكبر من 0',
                 'min' => '.حقل :attribute يجب أن يكون أكبر أو يساوي ال 0',
+            ],
+            'create_coefficient' => [
+                'required' => '.حقل :attribute مطلوب',
+                'string'    => '.حقل :attribute يجب أن يكون نصاً',
+                'max' => '.حقل :attribute يجب ألا يتجاوز :max حرفاً',
+                'numeric'    => '.حقل :attribute يجب أن يكون رقماً',
+                'gt' => '.حقل :attribute يجب أن يكون أكبر من 0',
+            ],
+            'update_coefficient' => [
+                'required' => '.حقل :attribute مطلوب',
+                'numeric'    => '.حقل :attribute يجب أن يكون رقماً',
+                'gt' => '.حقل :attribute يجب أن يكون أكبر من 0',
             ],
 
             default => [],
@@ -116,6 +136,14 @@ class VehicleTypeFormRequest extends FormRequest
                 'max_width' => '(الحد الأعلى لعرض المركبة)',
                 'min_height' => '(الحد الأدنى لارتفاع المركبة)',
                 'max_height' => '(الحد الأعلى لارتفاع المركبة)'
+            ],
+            'create_coefficient' => [
+                'name' => 'الاسم',
+                'value' => 'القيمة',
+            ],
+            'update_coefficient' => [
+                'coefficient_id' => 'رقم معامل السعر',
+                'value' => 'القيمة',
             ],
 
             default => [],

@@ -37,7 +37,7 @@ return new class extends Migration
             $table->string('qr_pin');
             $table->string('status');
             $table->boolean('success');
-            $table->timestamp('delivery_deadline');
+            $table->dateTime('delivery_deadline');
             $table->boolean('paid')->default(false);
             $table->timestamps();
         });

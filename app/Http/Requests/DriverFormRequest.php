@@ -28,14 +28,18 @@ class DriverFormRequest extends FormRequest
     {
         $noHtml = new NoHtml();
         $fileLimit = 'max:10240';
+      return match($this->route()->getActionMethod()) {
+        'attach_governorate' => [
+           'gov_id' => 'required|exists:governorates,id'
+        ],
+        'detatch_governorate' => [
+           'gov_id' => 'required|exists:governorates,id'
+        ],
+        'set_driver_location' => [
+           'lat' => 'required|numeric',
+           'lng' => 'required|numeric'
+        ],
 
-        return match ($this->route()->getActionMethod()) {
-            'attach_governorate' => [
-                'gov_id' => 'required|exists:governorates,id'
-            ],
-            'detatch_governorate' => [
-                'gov_id' => 'required|exists:governorates,id'
-            ],
             'search_for_driver' => [
                 'driver_number'  => 'required|string|exists:users,user_number',
             ],
@@ -158,6 +162,14 @@ class DriverFormRequest extends FormRequest
                 'car_status'           => 'حالة السيارة',
                 'car_papers'           => 'أوراق السيارة',
             ],
+            'set_driver_location' => [
+                'lat.required' => 'إحداثيات خط العرض مطلوبة',
+                'lat.numeric' => 'خط العرض يجب أن يكون رقماً',
+
+                'lng.required' => 'إحداثيات خط الطول مطلوبة',
+                'lng.numeric' => 'خط الطول يجب أن يكون رقماً',
+            ],
+
             default => [],
         };
     }

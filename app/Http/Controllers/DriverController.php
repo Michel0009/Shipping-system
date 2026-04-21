@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\DriverFormRequest;
 use App\Services\DriverService;
+use Exception;
 
 class DriverController extends Controller
 {
@@ -80,6 +81,11 @@ class DriverController extends Controller
         $validated = $request->validated();
         $driver = $this->driverService->search_for_driver($validated);
         return response()->json($driver);
-
+    }
+    public function update_driver(DriverFormRequest $request, $id)
+    {
+        $validated = $request->validated();
+        $result = $this->driverService->update_driver($id, $validated);
+        return response()->json(['message' => $result['message']], $result['code']);
     }
 }

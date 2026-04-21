@@ -56,5 +56,8 @@ class ShipmentRepository
     {
         return $shipment->save();
     }
-
+    public function get_shipments_by_driver_id($driver_id)
+    {
+        return $this->shipment->where('driver_id', $driver_id)->get();
+    }
 }

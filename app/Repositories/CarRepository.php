@@ -48,10 +48,15 @@ class CarRepository
     }
     public function get_car_files($car)
     {
-        $car_paper = $car->car_paper()->select('id', 'car_license_file')->get();
+        return $car->car_papers()->select('id','type', 'car_file')->get();
+    }
 
-        return [
-            'car_paper' => $car_paper,
-        ];
+    public function update($carId, array $data){
+        $car= $this->car->find($carId);
+        $car->update($data);
+    }
+    public function update_car_paper($paperId, array $data){
+        $carPaper= $this->car->find($paperId);
+        $carPaper->update($data);
     }
 }

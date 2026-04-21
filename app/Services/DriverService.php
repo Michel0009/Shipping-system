@@ -5,12 +5,15 @@ namespace App\Services;
 use App\Repositories\CarRepository;
 use App\Repositories\DriverRepository;
 use App\Repositories\ReviewRepository;
+use App\Repositories\ShipmentRepository;
 use App\Repositories\UserRepository;
 use Exception;
+use finfo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-
-use function Symfony\Component\Clock\now;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DriverService
 {
@@ -19,17 +22,19 @@ class DriverService
     protected $carRepository;
     protected $reviewRepository;
     protected $userRepository;
-
+    protected $shipmentRepository;
     public function __construct(
         DriverRepository $driverRepository,
         CarRepository $carRepository,
         ReviewRepository $reviewRepository,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        ShipmentRepository $shipmentRepository
     ) {
         $this->driverRepository = $driverRepository;
         $this->carRepository = $carRepository;
         $this->reviewRepository = $reviewRepository;
         $this->userRepository = $userRepository;
+        $this->shipmentRepository = $shipmentRepository;
     }
     public function change_driver_availability()
     {
@@ -194,7 +199,7 @@ class DriverService
     {
         $page = request('page', 1);
         $cacheKey = "drivers_page_" . $page;
-        return Cache::tags(["driver_list"])->remember($cacheKey,900, function () {
+        return Cache::tags(["driver_list"])->remember($cacheKey, 900, function () {
             $driversPaginator = $this->driverRepository->get_drivers();
             $availableCount = $this->driverRepository->get_available_drivers_count();
             return [
@@ -221,26 +226,22 @@ class DriverService
             return $this->carRepository->find_by_driver_ID($id);
         });
         $files = Cache::remember("driver_{$id}_docs", $ttl, function () use ($car, $driver) {
-            $carFiles=$this->carRepository->get_car_files($car);
-            $driverFiles=$this->driverRepository->get_driver_files($driver);
+            $carFiles = $this->carRepository->get_car_files($car);
+            $driverFiles = $this->driverRepository->get_driver_files($driver);
             return [
                 'car_files' => $carFiles,
                 'driver_files' => $driverFiles
             ];
         });
-        $driver_governorates = Cache::remember("driver_{$id}_gov", $ttl, function () use ($driver) {
-            return $this->driverRepository->get_driver_governorates($driver)
-                ->makeHidden(['pivot', 'created_at', 'updated_at']);
-        });
+        $driver_governorates = $this->driverRepository->get_driver_governorates($driver)
+            ->makeHidden(['pivot', 'created_at', 'updated_at']);
 
-        $average_rate = Cache::remember("driver_{$id}_avg_rate",600, function () use ($id) {
+        $average_rate = Cache::remember("driver_{$id}_avg_rate", 600, function () use ($id) {
             return $this->reviewRepository->get_driver_average_rate($id);
         });
-        $badge = Cache::remember("driver_{$id}_badge", $ttl, function () use ($driver) {
-            return $this->driverRepository->get_badge($driver);
-        });
+        $badge =  $this->driverRepository->get_badge($driver);
         $shipments = Cache::remember("driver_{$id}_shipments", 600, function () use ($id) {
-            return $this->driverRepository->get_driver_shipments_by_id($id);
+            return $this->shipmentRepository->get_shipments_by_driver_id($id);
         });
         if ($shipments->isNotEmpty()) {
             $amountToPay = $shipments->sum('price');
@@ -250,6 +251,12 @@ class DriverService
         }
         return [
             'driver' => $driver,
+            'user' => $user,
+            'car' => $car,
+            'files' => $files,
+            'driver_governorates' => $driver_governorates,
+            'average_rate' => round($average_rate, 2),
+            'badge' => $badge,
             'amount_to_pay' => $amountToPay
         ];
     }
@@ -263,5 +270,192 @@ class DriverService
             ];
         }
         return $driver;
+    }
+    private function check_files(array $mainFiles, array $carPapers, $userId)
+    {
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $allowedMime = [
+            'image/jpeg',
+            'image/png',
+            'application/pdf',
+            'image/heic',
+            'image/heif',
+            'image/heic-sequence',
+            'image/heif-sequence'
+        ];
+        $allFilesToValidate = array_merge(
+            $mainFiles,
+            array_column($carPapers, 'car_file')
+        );
+        foreach ($allFilesToValidate as $file) {
+            if ($file) {
+                $realMime = $finfo->file($file->getPathname());
+                if (!in_array($realMime, $allowedMime)) {
+                    throw new Exception("{$file->getClientOriginalName()} نوع الملف الحقيقي غير مسموح لـ ", 422);
+                }
+            }
+        }
+        $storedMain = [];
+        foreach ($mainFiles as $key => $file) {
+            if ($file) {
+                $extension = strtolower($file->getClientOriginalExtension());
+                $newName = Str::uuid()->toString() . "." . $extension;
+                $path = "users/{$userId}/{$newName}";
+                Storage::disk('local')->put($path, file_get_contents($file));
+                $storedMain[$key] = $path;
+            }
+        }
+        $storedCarPapers = [];
+        foreach ($carPapers as $paper) {
+            if (isset($paper['car_file'])) {
+                $file = $paper['car_file'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                $newName = Str::uuid()->toString() . "." . $extension;
+                $path = "users/{$userId}/{$newName}";
+
+                Storage::disk('local')->put($path, file_get_contents($file));
+
+                $storedCarPapers[] = [
+                    'type' => $paper['type'],
+                    'car_file' => $path
+                ];
+            }
+        }
+        return [$storedMain, $storedCarPapers];
+    }
+    private function deleteFiles($paths)
+    {
+        if (empty($paths)) {
+            return;
+        }
+
+        $filesToDelete = is_array($paths) ? $paths : [$paths];
+
+        foreach ($filesToDelete as $path) {
+            if ($path && Storage::disk('local')->exists($path)) {
+                Storage::disk('local')->delete($path);
+            }
+        }
+    }
+    public function update_driver($id, array $data)
+    {
+        $userFields = ['first_name', 'last_name', 'phone_number'];
+
+        $driverFields = [
+            'father_name',
+            'mother_name',
+            'mother_last_name',
+            'birth_date',
+            'birth_place',
+            'national_number',
+            'governorate',
+            'city',
+            'neighborhood',
+            'gender',
+            'additional_phone_number',
+            'nationality',
+        ];
+        $carFields = [
+            'vehicle_type_id',
+            'license_plate_number',
+            'manufacturer',
+            'model',
+            'year_of_manufacture',
+            'color',
+            'fuel_type',
+            'car_status'
+        ];
+        $files = [
+            'unconvicted_file',
+            'license_file',
+            'personal_picture'
+        ];
+        $carPapersData = collect($data['car_papers'] ?? [])->filter()->toArray();
+        $validData = collect($data)
+            ->only(array_merge($userFields, $driverFields, $carFields, $files))
+            ->filter(function ($value) {
+                return !is_null($value) && $value !== '';
+            })
+            ->toArray();
+        if (empty($validData) && empty($carPapersData) && empty($personalPicture)) {
+            return [
+                'status' => false,
+                'message' => 'لا يوجد بيانات لتحديثها',
+                'code' => 422
+            ];
+        }
+
+        $files = array_intersect_key($data, array_flip($files));
+        $driver = $this->driverRepository->find_driver($id);
+
+        $storedFiles = [];
+        $storedCarPapers = [];
+
+        if (!empty($files) || !empty($carPapersData)) {
+            [$storedFiles, $storedCarPapers] = $this->check_files($files, $carPapersData, $driver->user_id);
+        }
+
+        $userData = array_intersect_key($data, array_flip($userFields));
+        $driverData = array_intersect_key($data, array_flip($driverFields));
+        $carData = array_intersect_key($data, array_flip($carFields));
+        try {
+            return DB::transaction(function () use ($driver, $userData, $driverData, $carData, $storedFiles, $storedCarPapers, $id) {
+                $pathsToDelete = [];
+                if (!empty($driverData)) {
+                    $this->driverRepository->update($id, $driverData);
+                }
+                if (!empty($userData)) {
+                    $this->userRepository->update($driver->user_id, $userData);
+                }
+                if (!empty($carData)) {
+                    $car = $this->carRepository->find_by_driver_ID($id);
+                    $this->carRepository->update($car->id, $carData);
+                }
+                foreach ($storedFiles as $type => $path) {
+                    if ($type === "license_file") {
+                        $pathsToDelete[] = $this->driverRepository->get_license_path($id);
+                        $this->driverRepository->update_license($id, ['license_file' => $path]);
+                    }
+                    if ($type === "unconvicted_file") {
+                        $pathsToDelete[] = $this->driverRepository->get_unconvicted_paper_path($id);
+                        $this->driverRepository->update_unconvicted_paper($id, ['unconvicted_file' => $path]);
+                    }
+                    if ($type === "personal_picture") {
+                        $pathsToDelete[] = $this->driverRepository->find_driver($id)->personal_picture;
+                        $this->driverRepository->update($id, ['personal_picture' => $path]);
+                    }
+                }
+                foreach ($storedCarPapers as $paper) {
+                    $carPapers = $this->carRepository->get_car_files($car);
+                    $existingPaper = $carPapers->firstWhere('type', $paper['type']);
+                    $pathsToDelete[] = $existingPaper->car_file ?? null;
+                    if ($existingPaper) {
+                        $this->carRepository->update_car_paper($existingPaper->id, ['car_file' => $paper['car_file']]);
+                    } else {
+                        $this->carRepository->create_car_paper([
+                            'car_id' => $driver->car->id,
+                            'type' => $paper['type'],
+                            'car_file' => $paper['car_file']
+                        ]);
+                    }
+                }
+                $this->deleteFiles($pathsToDelete);
+                return [
+                    'status' => true,
+                    'message' => 'تم تعديل السائق بنجاح',
+                    'code' => 200
+                ];
+            });
+        } catch (Exception $e) {
+            $this->deleteFiles(array_merge($storedFiles, array_column($storedCarPapers, 'car_file')));
+            if ($e->getCode() == 422) {
+                return [
+                    'status' => false,
+                    'message' => $e->getMessage(),
+                    'code' => 422
+                ];
+            }
+            throw $e;
+        }
     }
 }

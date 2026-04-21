@@ -56,7 +56,7 @@ class UserFormRequest extends FormRequest
                 'fuel_type'            => ['required', 'string', 'max:50', $noHtml],
                 'car_status'           => ['required', 'string', 'max:100', $noHtml],
                 'car_papers'            => ['required', 'array', 'min:1', 'max:10'],
-                'car_papers.*.type'     => ['required', 'string', 'max:100', $noHtml],
+                'car_papers.*.type'     => ['required', 'string', 'max:100', 'in:اجار,ميكانيك,ملكية', $noHtml],
                 'car_papers.*.car_file' => ['required', 'file', 'mimes:pdf', $fileLimit],
             ],
             'edit_profile' => $this->edit_profile_rules(),

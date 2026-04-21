@@ -36,7 +36,8 @@ class UserRepository
     {
         return $this->user->where('role_id', 3)->get();
     }
-    public function get_last_user(){
+    public function get_last_user()
+    {
         return $this->user->max('id');
     }
     public function exists_by_user_number(string $userNumber): bool
@@ -47,19 +48,18 @@ class UserRepository
     public function delete_unverified_users()
     {
         $this->user->whereNull('email_verified_at')
-        ->where(function ($query) {
+            ->where(function ($query) {
 
-            $query->where(function ($q) {
-                $q->where('role_id', 3)
-                  ->where('created_at', '<=', now()->subDay());
+                $query->where(function ($q) {
+                    $q->where('role_id', 3)
+                        ->where('created_at', '<=', now()->subDay());
+                })
+                    ->orWhere(function ($q) {
+                        $q->where('role_id', 4)
+                            ->where('created_at', '<=', now()->subDays(14));
+                    });
             })
-            ->orWhere(function ($q) {
-                $q->where('role_id', 4)
-                  ->where('created_at', '<=', now()->subDays(14));
-            });
-
-        })
-        ->delete();
+            ->delete();
     }
 
     public function create_refresh_token($userId, $token, $expiresAt)
@@ -86,5 +86,9 @@ class UserRepository
     {
         $token->update(['is_revoked' => true]);
     }
-
+    public function update($userId, array $data)
+    {
+        $user = $this->user->find($userId);
+        $user->update($data);
+    }
 }

@@ -12,7 +12,7 @@ class DriverObserver
      */
     public function created(Driver $driver): void
     {
-        $this->clearCache();
+        $this->clearListCache();
     }
 
     /**
@@ -20,9 +20,15 @@ class DriverObserver
      */
     public function updated(Driver $driver): void
     {
-        $this->clearCache();
+        $this->clearSpecificDriverCache($driver);
     }
-    protected function clearCache()
+    protected function clearSpecificDriverCache(Driver $driver)
+    {
+        $this->clearListCache();
+        Cache::forget("driver_{$driver->id}_driver");
+    }
+
+    protected function clearListCache()
     {
         Cache::tags(['driver_list'])->flush();
     }

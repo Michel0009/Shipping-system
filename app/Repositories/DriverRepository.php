@@ -9,17 +9,18 @@ use App\Models\Governorate;
 use App\Models\License;
 use App\Models\Unconvicted_paper;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class DriverRepository
 {
     protected $driver;
     protected $license;
-    protected $uncovicted_paper;
+    protected $unconvicted_paper;
     public function __construct(Driver $driver, License $license, Unconvicted_paper $unconvicted_paper)
     {
         $this->driver = $driver;
         $this->license=$license;
-        $this->uncovicted_paper=$unconvicted_paper;
+        $this->unconvicted_paper=$unconvicted_paper;
     }
     public function create(array $data): Driver
     {
@@ -35,7 +36,7 @@ class DriverRepository
     }
     public function create_unconvicted_paper(array $data): Unconvicted_paper
     {
-        return $this->uncovicted_paper->create($data);
+        return $this->unconvicted_paper->create($data);
     }
     public function attach_governorates($driver,array $governorateIds){
         return $driver->governorates()->sync($governorateIds);
@@ -128,7 +129,6 @@ class DriverRepository
                 'car.vehicle_type:id,type'
             ])
             ->withAvg('reviews', 'rate')
-            ->withCount('shipments')
             ->paginate(5);
         return $drivers->through(function ($driver) {
             return [
@@ -147,14 +147,6 @@ class DriverRepository
     {
         return $this->driver->where('availability', true)->count();
     }
-    public function get_driver_shipments_by_id($id)
-    {
-        $lastMonth = Carbon::now()->subMonth();
-        $start = $lastMonth->copy()->startOfMonth();
-        $end = $lastMonth->copy()->endOfMonth();
-        $driver = $this->find_driver($id);
-        return $driver->shipments()->get();
-    }
     public function find_by_user_number($user_number)
     {
         return $this->driver->whereHas('user', function ($query) use ($user_number) {
@@ -164,11 +156,36 @@ class DriverRepository
     public function get_driver_files($driver)
     {
         $license = $driver->license()->select('id', 'license_file')->first();
-        $unconvicted_paper = $driver->unconvicted_paper()->select('id', 'uncovicted_file')->first();
+        $unconvicted_paper = $driver->unconvicted_paper()->select('id', 'unconvicted_file')->first();
 
         return [
             'license' => $license,
             'unconvicted_paper' => $unconvicted_paper,
         ];
+    }
+    public function update($driverId, array $data){
+        $driver = $this->driver->find($driverId);
+        $driver->update($data);
+    }
+    public function update_license($driverId, array $data){
+        $license=$this->license->where('driver_id', $driverId);
+        $license->update($data);
+    }
+    public function update_unconvicted_paper($driverId, array $data){
+        $unconviectedPaper=$this->unconvicted_paper->where('driver_id', $driverId);
+        $unconviectedPaper->update($data);
+    }
+    public function get_license_path($driverId)
+    {
+        Cache::forget("driver_{$driverId}_docs");
+
+        return $this->license->where('driver_id', $driverId)->value('license_file');
+
+    }
+    public function get_unconvicted_paper_path($driverId)
+    {
+        Cache::forget("driver_{$driverId}_docs");
+
+        return $this->unconvicted_paper->where('driver_id', $driverId)->value('unconvicted_file');
     }
 }

@@ -65,6 +65,11 @@ class DriverController extends Controller
         return response()->json($driver);
     }
 
+    public function get_driver_image($id)
+    {
+        return $this->driverService->get_driver_image($id);
+    }
+
     public function count_continuous_successful_shipments()
     {
         $count = $this->driverService->count_continuous_successful_shipments();

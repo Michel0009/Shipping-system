@@ -22,7 +22,8 @@ class Driver extends Model
         'additional_phone_number',
         'personal_picture',
         'nationality',
-        'continuous_successful_shipments'
+        'continuous_successful_shipments',
+        'version'
     ];
     public function user()
     {

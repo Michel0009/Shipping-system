@@ -67,8 +67,8 @@ class ShipmentController extends Controller
         $result = $this->shipmentService->send_to_driver($request->validated());
 
         return response()->json([
-            'message' => $result,
-        ]);
+            'message' => $result['message'],
+        ], $result['status_code']);
     }
 
     public function respond_to_request(ShipmentFormRequest $request)

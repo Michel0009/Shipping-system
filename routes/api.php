@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('/governorates', [DriverController::class, 'governorates']);
   Route::get('/profile', [UserController::class, 'get_profile']);
   Route::get('/vehicleTypes', [VehicleTypeController::class, 'vehicle_types']);
+  Route::get('/driverImage/{id}', [DriverController::class, 'get_driver_image']);
 
   // Client Routes
   Route::middleware('role:client')->group(function () {

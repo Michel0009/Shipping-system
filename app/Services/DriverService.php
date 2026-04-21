@@ -159,6 +159,8 @@ class DriverService
     public function get_driver_details($id){
 
         $driver = $this->driverRepository->find_driver($id);
+        if($driver == null) return ['message' => 'هذ السائق غير موجود'];
+
         $user = $this->userRepository->find_user($driver->user_id);
         $userData = [
             'user_id' => $user->id,
@@ -183,6 +185,27 @@ class DriverService
           'average_rate' => round($average, 2),
           'badge' => $badge,
         ];
+    }
+
+    public function get_driver_image($id)
+    {
+        $driver = $this->driverRepository->find_driver($id);
+
+        if (!$driver) {
+            return response()->json([
+                'message' => 'السائق غير موجود'
+            ], 404);
+        }
+
+        $path = storage_path('app/private/' . $driver->personal_picture);
+
+        if (!file_exists($path)) {
+            return response()->json([
+                'message' => 'الصورة غير موجودة'
+            ], 404);
+        }
+
+        return response()->file($path);
     }
 
     public function count_continuous_successful_shipments(){

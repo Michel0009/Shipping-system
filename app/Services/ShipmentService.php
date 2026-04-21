@@ -46,7 +46,7 @@ class ShipmentService
 
       $added = Cache::add($cacheKey, $payload, $expiresAt);
       if (!$added) {
-          throw new \Exception('لديك طلب شحنة قيد المعالجة بالفعل');
+          abort(409, 'لديك طلب شحنة قيد المعالجة بالفعل');
       }
 
       return $payload;
@@ -60,7 +60,7 @@ class ShipmentService
       $shipment = Cache::get($cacheKey);
 
       if (!$shipment) {
-          throw new \Exception('لا يوجد طلب شحنة حالياً');
+          abort(404, 'لا يوجد طلب شحنة حالياً');
       }
       return $shipment;
   }
@@ -72,7 +72,7 @@ class ShipmentService
       $cacheKey = "shipment_request_user_" . $user->id;
 
       if (!Cache::has($cacheKey)) {
-          throw new \Exception('لا يوجد طلب شحنة لحذفه');
+          abort(404, 'لا يوجد طلب شحنة لحذفه');
       }
       Cache::forget($cacheKey);
 
@@ -87,7 +87,7 @@ class ShipmentService
       $shipment = Cache::get($cacheKey);
 
       if (!$shipment) {
-          throw new \Exception('لا يوجد طلب شحنة لتعديله');
+          abort(404, 'لا يوجد طلب شحنة لتعديله');
       }
 
       $updatedShipment = array_merge($shipment, $data);
@@ -104,7 +104,7 @@ class ShipmentService
       $shipment = Cache::get($cacheKey);
   
       if (!$shipment) {
-          throw new \Exception('لا يوجد طلب شحنة');
+          abort(404, 'لا يوجد طلب شحنة');
       }
   
       $expiresAt = $shipment['expires_at'];
@@ -133,18 +133,31 @@ class ShipmentService
       $shipment = Cache::get($shipmentKey);
   
       if (!$shipment) {
-          throw new Exception('لا يوجد طلب شحنة');
+          abort(404, 'لا يوجد طلب شحنة');
       }
       $driver = $this->driverRepository->find_driver($data['driver_id']);
   
       if (!$driver->availability) {
-          return "هذا السائق غير متاح حاليا";
+          return [
+              'message' => "هذا السائق غير متاح حاليا",
+              'status_code' => 401
+          ];
       }
 
       $startGov = $this->driverRepository->find_governorate($shipment['start_governorate_id']);
       $endGov = $this->driverRepository->find_governorate($shipment['end_governorate_id']);
       $shipment['start_governorate'] = $startGov->name;
       $shipment['end_governorate'] = $endGov->name;
+
+      $userRequestPattern = "*driver_request_*_user_{$user->id}";
+      $existingRequests = collect(Cache::getRedis()->keys($userRequestPattern));
+      
+      if ($existingRequests->isNotEmpty()) {
+          return [
+              'message' => "لديك طلب قيد الانتظار مع سائق آخر",
+              'status_code' => 409
+          ];
+      }
   
       $requestKey = "driver_request_{$driver->id}_user_{$user->id}";
       $expiresAt = now()->addMinutes(10);
@@ -163,14 +176,20 @@ class ShipmentService
   
       if (!$added) {
         // Cache::forget($requestKey);
-          return "تم إرسال طلب لهذا السائق مسبقاً";
+          return [
+              'message' => "تم إرسال طلب لهذا السائق مسبقاً",
+              'status_code' => 401
+          ];
       }
   
       app(\App\Services\NotificationService::class)->send_notification($driver->user_id,
           'لديك طلب شحنة جديد. الرجاء التحقق منه والتعامل معه', 0, 'طلب شحنة جديد', $payload
       );
   
-      return "تم إرسال الطلب إلى السائق";
+      return [
+          'message' => "تم إرسال الطلب إلى السائق",
+          'status_code' => 200
+      ];
   }
 
 
@@ -183,7 +202,7 @@ class ShipmentService
       $request = Cache::get($requestKey);
   
       if (!$request) {
-          throw new Exception('انتهت صلاحية الطلب أو أنه غير موجود');
+          abort(404, 'انتهت صلاحية الطلب أو أنه غير موجود');
       }
   
       if (!$data['action']) {

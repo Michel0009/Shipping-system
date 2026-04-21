@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('nationality');
             $table->unsignedInteger('continuous_successful_shipments')->default(0);
             $table->boolean('availability')->default(false);
+            $table->unsignedInteger('version')->default(1);
             $table->timestamps();
         });
     }

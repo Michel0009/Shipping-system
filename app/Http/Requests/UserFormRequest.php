@@ -42,7 +42,7 @@ class UserFormRequest extends FormRequest
                 'gender'           => ['required', 'string', 'in:ذكر,أنثى', $noHtml],
                 'nationality'      => ['required', 'string', 'max:255', $noHtml],
                 'additional_phone_number' => ['nullable', 'string', 'max:20', $noHtml],
-                'personal_picture' => ['required', 'file', 'mimes:jpeg,jpg,png,pdf,heic,heif', $fileLimit],
+                'personal_picture' => ['required', 'file', 'mimes:jpeg,jpg,png,heic,heif', $fileLimit],
                 'license_file'     => ['required', 'file', 'mimes:pdf', $fileLimit],
                 'unconvicted_file' => ['required', 'file', 'mimes:pdf', $fileLimit],
                 'governorate_ids'   => ['required', 'array', 'min:1', 'max:50'],
@@ -166,6 +166,4 @@ class UserFormRequest extends FormRequest
             'phone_number' => ['sometimes', 'string', 'max:20', $noHtml],
         ];
     }
-
-
 }

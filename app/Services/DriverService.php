@@ -170,7 +170,7 @@ class DriverService
     {
 
         $driver = $this->driverRepository->find_driver($id);
-        if($driver == null) return ['message' => 'هذ السائق غير موجود'];
+        if ($driver == null) return ['message' => 'هذ السائق غير موجود'];
 
         $user = $this->userRepository->find_user($driver->user_id);
         $userData = [
@@ -341,6 +341,14 @@ class DriverService
     }
     public function update_driver($id, array $data)
     {
+        $driver = $this->driverRepository->find_driver($id);
+        if ($driver->version != $data['version']) {
+            return [
+                'message' => 'تم تعديل بيانات السائق من قبل مستخدم آخر، يرجى تحديث الصفحة والمحاولة مرة أخرى',
+                'code' => 409
+            ];
+        }
+        $version = $data['version'] + 1;
         $userFields = ['first_name', 'last_name', 'phone_number'];
 
         $driverFields = [
@@ -381,14 +389,12 @@ class DriverService
             ->toArray();
         if (empty($validData) && empty($carPapersData) && empty($personalPicture)) {
             return [
-                'status' => false,
                 'message' => 'لا يوجد بيانات لتحديثها',
                 'code' => 422
             ];
         }
 
         $files = array_intersect_key($data, array_flip($files));
-        $driver = $this->driverRepository->find_driver($id);
 
         $storedFiles = [];
         $storedCarPapers = [];
@@ -401,11 +407,9 @@ class DriverService
         $driverData = array_intersect_key($data, array_flip($driverFields));
         $carData = array_intersect_key($data, array_flip($carFields));
         try {
-            return DB::transaction(function () use ($driver, $userData, $driverData, $carData, $storedFiles, $storedCarPapers, $id) {
+            return DB::transaction(function () use ($driver, $userData, $driverData, $carData, $storedFiles, $storedCarPapers, $id, $version) {
                 $pathsToDelete = [];
-                if (!empty($driverData)) {
-                    $this->driverRepository->update($id, $driverData);
-                }
+                $this->driverRepository->update($id, array_merge($driverData, ['version' => $version]));
                 if (!empty($userData)) {
                     $this->userRepository->update($driver->user_id, $userData);
                 }
@@ -442,8 +446,7 @@ class DriverService
                             'type' => $paper['type'],
                             'car_file' => $paper['car_file']
                         ]);
-                    }
-                    else {
+                    } else {
                         $this->carRepository->create_car_paper([
                             'car_id' => $driver->car->id,
                             'type' => $paper['type'],
@@ -453,7 +456,6 @@ class DriverService
                 }
                 $this->deleteFiles($pathsToDelete);
                 return [
-                    'status' => true,
                     'message' => 'تم تعديل السائق بنجاح',
                     'code' => 200
                 ];
@@ -491,7 +493,8 @@ class DriverService
         return response()->file($path);
     }
 
-    public function count_continuous_successful_shipments(){
+    public function count_continuous_successful_shipments()
+    {
 
         $user = Auth::user();
         $driver = $this->driverRepository->find_by_user_ID($user->id);

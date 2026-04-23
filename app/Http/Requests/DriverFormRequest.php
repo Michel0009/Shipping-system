@@ -28,17 +28,17 @@ class DriverFormRequest extends FormRequest
     {
         $noHtml = new NoHtml();
         $fileLimit = 'max:10240';
-      return match($this->route()->getActionMethod()) {
-        'attach_governorate' => [
-           'gov_id' => 'required|exists:governorates,id'
-        ],
-        'detatch_governorate' => [
-           'gov_id' => 'required|exists:governorates,id'
-        ],
-        'set_driver_location' => [
-           'lat' => 'required|numeric',
-           'lng' => 'required|numeric'
-        ],
+        return match ($this->route()->getActionMethod()) {
+            'attach_governorate' => [
+                'gov_id' => 'required|exists:governorates,id'
+            ],
+            'detatch_governorate' => [
+                'gov_id' => 'required|exists:governorates,id'
+            ],
+            'set_driver_location' => [
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric'
+            ],
 
             'search_for_driver' => [
                 'driver_number'  => 'required|string|exists:users,user_number',
@@ -73,10 +73,11 @@ class DriverFormRequest extends FormRequest
                 'car_status'                => ['sometimes', 'string', 'max:100', $noHtml],
                 'unconvicted_file'          => ['sometimes',  'file', 'mimes:pdf', $fileLimit],
                 'license_file'              => ['sometimes',  'file', 'mimes:pdf', $fileLimit],
-                'personal_picture'          => ['sometimes', 'file', 'mimes:jpeg,jpg,png,pdf,heic,heif', $fileLimit],
+                'personal_picture'          => ['sometimes', 'file', 'mimes:jpeg,jpg,png,heic,heif', $fileLimit],
                 'car_papers'                => ['sometimes', 'array', 'min:1', 'max:10'],
                 'car_papers.*.type'         => ['required_with:car_papers', 'string', 'max:100', 'in:اجار,ميكانيك,ملكية', $noHtml],
                 'car_papers.*.car_file'     => ['required_with:car_papers', 'file', 'mimes:pdf', $fileLimit],
+                'version'                   => ['required', 'integer'],
             ],
             default => [],
         };
@@ -105,6 +106,8 @@ class DriverFormRequest extends FormRequest
                 'id.exists'   => 'السائق المطلوب غير موجود في النظام',
             ],
             'update_driver' => [
+                'version.required' => 'إصدار البيانات مطلوب',
+                'version.integer'  => 'يجب أن يكون إصدار البيانات رقماً',
                 'string'    => '.حقل :attribute يجب أن يكون نصاً',
                 'max.string' => '.حقل :attribute يجب ألا يتجاوز :max حرفاً',
                 'personal_picture.max' => '.حقل :attribute يجب ألا يتجاوز :max كيلوبايت',

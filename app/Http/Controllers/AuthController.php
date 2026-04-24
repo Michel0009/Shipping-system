@@ -52,7 +52,9 @@ class AuthController extends Controller
         $response = [
             'message' => 'تم التحقق من بريدك الإلكتروني بنجاح',
             'token' => $success['token'] ?? null,
-            'refresh_token' => $success['refresh_token'] ?? null
+            'refresh_token' => $success['refresh_token'] ?? null,
+            'user_id' => $success['user_id'] ?? null,
+            'driver_id' => $success['driver_id'] ?? null,
         ];
 
         $remember = filter_var(

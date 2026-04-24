@@ -265,6 +265,8 @@ class UserService
         $average = $this->reviewRepository->get_driver_average_rate($driver->id);
         $badge = $this->driverRepository->get_badge($driver);
 
+        $userData['driver_id'] = $driver->id;
+
         return [
           'user' => $userData,
           'car' => $car,

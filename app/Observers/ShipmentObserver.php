@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Cache;
 class ShipmentObserver
 {
     /**
-     * Handle the Shipment "created" event.
+     * Handle the Shipment "updated" event.
      */
-    public function created(Shipment $shipment): void
+    public function updated(Shipment $shipment): void
     {
         Cache::forget("driver_{$shipment->driver_id}_shipments");
     }

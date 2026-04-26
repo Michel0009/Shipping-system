@@ -14,12 +14,12 @@ class UserFormRequest extends FormRequest
     {
         return true;
     }
-
     /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
+
     public function rules(): array
     {
         $noHtml = new NoHtml();
@@ -63,7 +63,17 @@ class UserFormRequest extends FormRequest
             'save_device_token' => [
                 'token' => 'required|string'
             ],
-
+            'add_sub_admin'=>[
+                'first_name'   => ['required', 'string', 'max:255',$noHtml],
+                'last_name'    => ['required', 'string', 'max:255', $noHtml],
+                'email'        => ['required', 'email', 'unique:users,email', $noHtml],
+                'phone_number' => ['required', 'string', 'max:20', $noHtml],
+            ],
+            'update_sub_admin'=>[
+                'first_name'   => ['sometimes', 'string', 'max:255',$noHtml],
+                'last_name'    => ['sometimes', 'string', 'max:255', $noHtml],
+                'phone_number' => ['sometimes', 'string', 'max:20', $noHtml],
+            ],
             default => [],
         };
     }
@@ -99,7 +109,13 @@ class UserFormRequest extends FormRequest
                 'string' => '.حقل :attribute يجب أن يكون نصاً',
                 'max' => '.حقل :attribute يجب ألا يتجاوز :max عنصر',
             ],
-
+            'add_sub_admin' => [
+                'required' => '.حقل :attribute مطلوب',
+                'string'   => '.حقل :attribute يجب أن يكون نصاً',
+                'max'      => '.حقل :attribute يجب ألا يتجاوز :max حرفاً',
+                'email'    => '.البريد الإلكتروني المدخل غير صحيح',
+                'unique'   => '.هذا :attribute مستخدم بالفعل',
+            ],
             default => [],
         };
     }
@@ -145,7 +161,12 @@ class UserFormRequest extends FormRequest
                 'last_name' => 'الكنية',
                 'phone_number' => 'رقم الهاتف',
             ],
-
+            'add_sub_admin' => [
+                'first_name' => 'الاسم الأول',
+                'last_name' => 'الكنية',
+                'email' => 'البريد الإلكتروني',
+                'phone_number' => 'رقم الهاتف',
+            ],
             default => [],
         };
     }

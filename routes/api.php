@@ -66,6 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/coefficient/create', [VehicleTypeController::class, 'create_coefficient']);
         Route::put('/coefficient/update', [VehicleTypeController::class, 'update_coefficient']);
         Route::get('/coefficients', [VehicleTypeController::class, 'get_coefficients']);
+        Route::get('/subAdmins', [UserController::class, 'get_sub_admins']);
+        Route::post('/subAdmin/create', [UserController::class, 'add_sub_admin']);
+        Route::put('/subAdmin/update/{id}', [UserController::class, 'update_sub_admin']);
     });
 
     // Employee-Admin Routes
@@ -74,7 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/getDrivers', [DriverController::class, 'get_drivers']);
         Route::get('/driverDetails/{id}', [DriverController::class, 'get_driver_details_for_admin']);
         Route::post('/searchForDriver', [DriverController::class, 'search_for_driver']);
-        Route::post('/editDriver/{id}', [DriverController::class, 'update_driver']);
+        Route::put('/editDriver/{id}', [DriverController::class, 'update_driver']);
     });
 
     // Client-Driver Routes

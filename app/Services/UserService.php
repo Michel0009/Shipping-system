@@ -23,9 +23,12 @@ class UserService
     protected $notificationRepository;
     protected $reviewRepository;
 
-    public function __construct(UserRepository $userRepository, DriverRepository $driverRepository,
-         CarRepository $carRepository, ReviewRepository $reviewRepository)
-    {
+    public function __construct(
+        UserRepository $userRepository,
+        DriverRepository $driverRepository,
+        CarRepository $carRepository,
+        ReviewRepository $reviewRepository
+    ) {
         $this->userRepository = $userRepository;
         $this->driverRepository = $driverRepository;
         $this->carRepository = $carRepository;
@@ -241,7 +244,8 @@ class UserService
         }
     }
 
-    public function get_profile(){
+    public function get_profile()
+    {
 
         $user = Auth::user();
         $userData = [
@@ -253,24 +257,24 @@ class UserService
         ];
         if ($user['role_id'] != 4) {
             return [
-              'user' => $userData
+                'user' => $userData
             ];
         }
 
         $driver = $this->driverRepository->find_by_user_ID($user->id);
         $car = $this->carRepository->find_by_driver_ID($driver->id);
         $driver_governorates = $this->driverRepository->get_driver_governorates($driver)
-            ->makeHidden(['pivot','created_at','updated_at']);
-            
+            ->makeHidden(['pivot', 'created_at', 'updated_at']);
+
         $average = $this->reviewRepository->get_driver_average_rate($driver->id);
         $badge = $this->driverRepository->get_badge($driver);
 
         return [
-          'user' => $userData,
-          'car' => $car,
-          'driver_governorates' => $driver_governorates,
-          'average_rate' => round($average, 2),
-          'badge' => $badge,
+            'user' => $userData,
+            'car' => $car,
+            'driver_governorates' => $driver_governorates,
+            'average_rate' => round($average, 2),
+            'badge' => $badge,
         ];
     }
 
@@ -286,15 +290,54 @@ class UserService
                 $user->last_name = $data['last_name'];
             }
         }
-        
+
         if (isset($data['phone_number'])) {
             $user->phone_number = $data['phone_number'];
         }
-    
+
         $this->userRepository->save($user);
 
         return true;
     }
-
-
+    public function get_sub_admins()
+    {
+        return $this->userRepository->get_sub_admins();
+    }
+    public function add_sub_admin(array $data)
+    {
+        $userNumber = $this->generate_user_number();
+        $password = Str::password(rand(12, 16), true, true, true, false);
+        $userData = [
+            'role_id'      => 2,
+            'user_number'  => $userNumber,
+            'password'     => Hash::make($password),
+            'first_name'   => $data['first_name'],
+            'last_name'    => $data['last_name'],
+            'email'        => $data['email'],
+            'phone_number' => $data['phone_number']
+        ];
+        $this->userRepository->create($userData);
+        $this->send_email($data['email'], $password);
+    }
+    public function update_sub_admin(array $data, $id)
+    {
+        $user = $this->userRepository->find_user($id);
+        if (!$user || $user->role_id != 2) {
+            return [
+                'message' => 'لا يوجد موظف بهذا المعرف',
+                'code' => 404
+            ];
+        }
+        if (empty($data)) {
+            return [
+                'message' => 'لا توجد بيانات لتحديثها',
+                'code' => 422
+            ];
+        }
+        $this->userRepository->update($id, $data);
+         return [
+            'message' => 'تم تعديل الموظف بنجاح',
+            'code' => 200
+        ];
+    }
 }

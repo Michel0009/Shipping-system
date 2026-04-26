@@ -266,11 +266,6 @@ class DriverService
     {
         $driver_number = $data['driver_number'];
         $driver = $this->driverRepository->find_by_user_number($driver_number);
-        if (!$driver) {
-            return [
-                'message' => 'لا يوجد سائق بهذا الرقم'
-            ];
-        }
         return $driver;
     }
     private function check_files(array $mainFiles, array $carPapers, $userId)

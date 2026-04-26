@@ -91,4 +91,25 @@ class UserRepository
         $user = $this->user->find($userId);
         $user->update($data);
     }
+    public function get_sub_admins()
+    {
+        $statusLabels = [
+            0 => 'فعال',
+            1 => 'فعال ويجب عليه الدفع',
+            2 => 'مجمد',
+            3 => 'محظور',
+        ];
+        return $this->user->where('role_id', 2)->select('id', 'user_number', 'first_name', 'last_name', 'phone_number', 'status')->get()->map(function ($user) use ($statusLabels) {
+            $user->status_label = $statusLabels[$user->status] ?? null;
+            return [
+                'id' => $user->id,
+                'user_number' => $user->user_number,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone_number' => $user->phone_number,
+                'status' => $user->status_label,
+            ];;
+        });
+
+    }
 }

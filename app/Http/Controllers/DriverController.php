@@ -80,6 +80,9 @@ class DriverController extends Controller
     {
         $validated = $request->validated();
         $driver = $this->driverService->search_for_driver($validated);
+        if (!$driver) {
+            return response()->json(['message' => 'لا يوجد سائق بهذا الرقم'], 404);
+        }
         return response()->json($driver);
     }
     public function update_driver(DriverFormRequest $request, $id)

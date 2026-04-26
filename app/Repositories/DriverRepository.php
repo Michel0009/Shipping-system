@@ -19,8 +19,8 @@ class DriverRepository
     public function __construct(Driver $driver, License $license, Unconvicted_paper $unconvicted_paper)
     {
         $this->driver = $driver;
-        $this->license=$license;
-        $this->unconvicted_paper=$unconvicted_paper;
+        $this->license = $license;
+        $this->unconvicted_paper = $unconvicted_paper;
     }
     public function create(array $data): Driver
     {
@@ -38,7 +38,8 @@ class DriverRepository
     {
         return $this->unconvicted_paper->create($data);
     }
-    public function attach_governorates($driver,array $governorateIds){
+    public function attach_governorates($driver, array $governorateIds)
+    {
         return $driver->governorates()->sync($governorateIds);
     }
 
@@ -62,19 +63,19 @@ class DriverRepository
         return $driver->governorates()->get();
     }
 
-    public function attach_governorate($driver,$governorateId)
+    public function attach_governorate($driver, $governorateId)
     {
         return $driver->governorates()->syncWithoutDetaching([$governorateId]);
     }
 
-    public function detach_governorate($driver,$governorateId)
+    public function detach_governorate($driver, $governorateId)
     {
         return $driver->governorates()->detach($governorateId);
     }
 
     public function get_badge($driver)
     {
-        return Badge::where('id', $driver->badge_id)->select('level','name','text')->first();
+        return Badge::where('id', $driver->badge_id)->select('level', 'name', 'text')->first();
     }
 
     public function get_available_drivers($shipment)
@@ -86,30 +87,30 @@ class DriverRepository
             'badge',
             'governorates'
         ])
-        ->where('availability', true)
-        ->get()
-        ->filter(function ($driver) use ($shipment) {
+            ->where('availability', true)
+            ->get()
+            ->filter(function ($driver) use ($shipment) {
 
-            $govs = $driver->governorates->pluck('id')->toArray();
-            if (
-                !in_array($shipment['start_governorate_id'], $govs) ||
-                !in_array($shipment['end_governorate_id'], $govs)
-            ) {
-                return false;
-            }
+                $govs = $driver->governorates->pluck('id')->toArray();
+                if (
+                    !in_array($shipment['start_governorate_id'], $govs) ||
+                    !in_array($shipment['end_governorate_id'], $govs)
+                ) {
+                    return false;
+                }
 
-            $type = $driver->car->vehicle_type;
+                $type = $driver->car->vehicle_type;
 
-            return
-                $shipment['weight'] >= $type->min_weight &&
-                $shipment['weight'] <= $type->max_weight &&
-                $shipment['length'] >= $type->min_length &&
-                $shipment['length'] <= $type->max_length &&
-                $shipment['width'] >= $type->min_width &&
-                $shipment['width'] <= $type->max_width &&
-                $shipment['height'] >= $type->min_height &&
-                $shipment['height'] <= $type->max_height;
-        });
+                return
+                    $shipment['weight'] >= $type->min_weight &&
+                    $shipment['weight'] <= $type->max_weight &&
+                    $shipment['length'] >= $type->min_length &&
+                    $shipment['length'] <= $type->max_length &&
+                    $shipment['width'] >= $type->min_width &&
+                    $shipment['width'] <= $type->max_width &&
+                    $shipment['height'] >= $type->min_height &&
+                    $shipment['height'] <= $type->max_height;
+            });
     }
 
     public function get_coefficients()
@@ -132,10 +133,11 @@ class DriverRepository
             ->paginate(5);
         return $drivers->through(function ($driver) {
             return [
+                'id'           => $driver->id,
                 'first_name'   => $driver->user->first_name,
-                'last_name'    => $driver->user->last_name ,
+                'last_name'    => $driver->user->last_name,
                 'email'        => $driver->user->email,
-                'phone_number' => $driver->user->phone_number ,
+                'phone_number' => $driver->user->phone_number,
                 'availability' => (bool) $driver->availability,
                 'vehicle_type' => $driver->car->vehicle_type->type,
                 'rating'       => number_format($driver->reviews_avg_rate, 2) ?? "0.00",
@@ -149,9 +151,30 @@ class DriverRepository
     }
     public function find_by_user_number($user_number)
     {
-        return $this->driver->whereHas('user', function ($query) use ($user_number) {
-            $query->where('user_number', $user_number);
-        })->first();
+        $driver = $this->driver
+            ->with([
+                'user',
+                'car.vehicle_type'
+            ])
+            ->withAvg('reviews', 'rate')
+            ->whereHas('user', function ($query) use ($user_number) {
+                $query->where('user_number', $user_number);
+            })
+            ->first();
+        if (!$driver) {
+            return false;
+        }
+        return [
+            'id'           => $driver->id,
+            'first_name'   => $driver->user->first_name,
+            'last_name'    => $driver->user->last_name,
+            'email'        => $driver->user->email,
+            'phone_number' => $driver->user->phone_number,
+            'availability' => (bool) $driver->availability,
+            'vehicle_type' => $driver->car->vehicle_type->type,
+            'rating'       => number_format($driver->reviews_avg_rate, 2) ?? "0.00",
+            'user_number'  => $driver->user->user_number,
+        ];
     }
     public function get_driver_files($driver)
     {
@@ -163,16 +186,19 @@ class DriverRepository
             'unconvicted_paper' => $unconvicted_paper,
         ];
     }
-    public function update($driverId, array $data){
+    public function update($driverId, array $data)
+    {
         $driver = $this->driver->find($driverId);
         $driver->update($data);
     }
-    public function update_license($driverId, array $data){
-        $license=$this->license->where('driver_id', $driverId);
+    public function update_license($driverId, array $data)
+    {
+        $license = $this->license->where('driver_id', $driverId);
         $license->update($data);
     }
-    public function update_unconvicted_paper($driverId, array $data){
-        $unconviectedPaper=$this->unconvicted_paper->where('driver_id', $driverId);
+    public function update_unconvicted_paper($driverId, array $data)
+    {
+        $unconviectedPaper = $this->unconvicted_paper->where('driver_id', $driverId);
         $unconviectedPaper->update($data);
     }
     public function get_license_path($driverId)
@@ -180,7 +206,6 @@ class DriverRepository
         Cache::forget("driver_{$driverId}_docs");
 
         return $this->license->where('driver_id', $driverId)->value('license_file');
-
     }
     public function get_unconvicted_paper_path($driverId)
     {

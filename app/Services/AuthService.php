@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\SendEmailJob;
+use App\Repositories\DriverRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -13,10 +14,12 @@ class AuthService
 {
 
   protected $userRepository;
+  protected $driverRepository;
 
-  public function __construct(UserRepository $userRepository)
+  public function __construct(UserRepository $userRepository, DriverRepository $driverRepository)
   {
       $this->userRepository = $userRepository;
+      $this->driverRepository = $driverRepository;
   }
 
   public function user_Register(array $request)
@@ -113,7 +116,14 @@ class AuthService
         $this->userRepository->save($user);
         $refreshToken = $this->generate_refresh_token($user);
 
-        return ['token' => $token, 'refresh_token' => $refreshToken];
+        $driver_id = null;
+        if ($user['role_id'] == 4){
+            $driver = $this->driverRepository->find_by_user_ID($user->id);
+            $driver_id = $driver->id;
+        }
+
+        return ['token' => $token, 'refresh_token' => $refreshToken,
+                  'user_id' => $user->id, 'driver_id' => $driver_id];
       }
       return true;
     
@@ -194,12 +204,20 @@ class AuthService
       $this->userRepository->save($user);
       $refreshToken = $this->generate_refresh_token($user);
 
+      $driver_id = null;
+      if ($user['role_id'] == 4){
+          $driver = $this->driverRepository->find_by_user_ID($user->id);
+          $driver_id = $driver->id;
+      }
+
       $responseData = [
         'message' => 'مرحباً بك',
         'token' => $token,
         'refresh_token' => $refreshToken,
         'role' => $user->role->name,
         'first_login_for_driver' => $first_login_driver,
+        'user_id' => $user->id,
+        'driver_id' => $driver_id,
       ];
 
       return $responseData;

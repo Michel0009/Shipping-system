@@ -59,7 +59,18 @@ class UserController extends Controller
             'message' => $result['message'],
         ], $result['code']);
     }
-    public function block($id){
+    public function block(UserFormRequest $request){
+        $result = $this->userService->block($request->validated());
 
+        return response()->json([
+            'message' => $result['message'],
+        ], $result['code']);
+    }
+    public function unblock($id){
+        $result = $this->userService->unblock($id);
+
+        return response()->json([
+            'message' => $result['message'],
+        ], $result['code']);
     }
 }

@@ -25,7 +25,7 @@ class AuthService
   public function user_Register(array $request)
   {
     $user_number = app(\App\Services\UserService::class)->generate_user_number();
-    
+
     $user = $this->userRepository->create([
       'first_name' => $request['first_name'],
       'last_name' => $request['last_name'],
@@ -126,7 +126,7 @@ class AuthService
                   'user_id' => $user->id, 'driver_id' => $driver_id];
       }
       return true;
-    
+
     }
     return false;
   }
@@ -145,9 +145,9 @@ class AuthService
 
       $resetToken = Str::random(64);
       Cache::put("reset_token_".$user->id, $resetToken, now()->addMinutes(10));
-      
+
       return ['reset_token' => $resetToken];
-    
+
     }
     return false;
   }
@@ -197,7 +197,7 @@ class AuthService
       if ($user['role_id'] == 4 && $user['number_of_change_password'] == 0) {
         $first_login_driver = true;
         $this->send_email($user->email);
-      } 
+      }
 
       $token = $user->createToken('AccessToken')->plainTextToken;
       $user->number_of_logins = $user->number_of_logins + 1;
@@ -264,12 +264,12 @@ class AuthService
       if ($user->status == 2) {
           return 'frozen';
       }
-      // New Access 
+      // New Access
       $newAccessToken = $user->createToken('AccessToken')->plainTextToken;
       $response = [
          'access_token' => $newAccessToken,
       ];
-      // New Refresh 
+      // New Refresh
       if ($refreshToken->expires_at <= now()->addDays(3)) {
 
         $this->userRepository->revoke_token($refreshToken);

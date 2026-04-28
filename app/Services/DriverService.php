@@ -214,7 +214,7 @@ class DriverService
     {
         $ttl = 86400;
 
-        $driver =   Cache::remember(
+        $driver = Cache::remember(
             "driver_{$id}_driver",
             $ttl,
             function () use ($id) {
@@ -222,7 +222,18 @@ class DriverService
             }
         );
         $user = Cache::remember("driver_{$id}_user", $ttl, function () use ($driver) {
-            return $this->userRepository->find_user($driver->user_id);
+            $statusLabels = $this->userRepository->getStatusLabels();
+            $user = $this->userRepository->find_user($driver->user_id);
+            $user->status_label = $statusLabels[$user->status] ?? null;
+            return [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'user_number' => $user->user_number,
+                'phone_number' => $user->phone_number,
+                'email' => $user->email,
+                'status' => $user->status_label,
+            ];
         });
         $car = Cache::remember("driver_{$id}_car", $ttl, function () use ($id) {
             return $this->carRepository->find_by_driver_ID($id);

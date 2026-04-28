@@ -115,54 +115,60 @@ class UserService
 
         return $path;
     }
-    private function send_email(string $email, string $plainPassword)
+    private function send_email(string $email, string $plainPassword, bool $isSubAdmin = false)
     {
         $user = $this->userRepository->find_by_email($email);
         if (!$user) return;
 
-        $subject = 'مرحباً بك في نظام شحن البضائع - بيانات الدخول الخاصة بك';
+        $subject = $isSubAdmin
+            ? 'نظام شحن البضائع - بيانات اعتماد المسؤول الفرعي'
+            : 'مرحباً بك في نظام شحن البضائع - بيانات الدخول الخاصة بك';
+
+        $welcomeMessage = $isSubAdmin
+            ? 'يسعدنا انضمامك إلينا بصفتك <strong>مسؤولاً فرعياً (Sub-Admin)</strong> في نظام إدارة شحن البضائع. تم منحك صلاحيات الوصول اللازمة للمساهمة في إدارة العمليات والإشراف على النظام.'
+            : 'يسعدنا انضمامك إلينا في <strong>نظام إدارة شحن البضائع</strong>. تم إنشاء حسابك بنجاح، ويمكنك الآن البدء في استقبال وإدارة طلبات الشحن الخاصة بك.';
 
         $emailBody = '
-      <div style="direction: rtl; font-family: Tahoma, Arial, sans-serif; font-size:16px; background-color:#f4f6f9; padding:20px; text-align:right; max-width:750px; margin:auto; border-radius:10px;">
+    <div style="direction: rtl; font-family: Tahoma, Arial, sans-serif; font-size:16px; background-color:#f4f6f9; padding:20px; text-align:right; max-width:750px; margin:auto; border-radius:10px;">
 
-          <div style="text-align:center; margin-bottom:20px;">
-              <h2 style="color:#2563eb;">نظام إدارة شحن البضائع</h2>
-          </div>
+        <div style="text-align:center; margin-bottom:20px;">
+            <h2 style="color:#2563eb;">نظام إدارة شحن البضائع</h2>
+        </div>
 
-          <p style="color:#1f2937; font-size:18px; margin-bottom:15px;">
-              مرحباً <strong>' . $user->first_name . '</strong>،
-          </p>
+        <p style="color:#1f2937; font-size:18px; margin-bottom:15px;">
+            مرحباً <strong>' . $user->first_name . '</strong>،
+        </p>
 
-          <p style="margin-bottom:20px; line-height:1.6;">
-              يسعدنا انضمامك إلينا في <strong>نظام إدارة شحن البضائع</strong>. تم إنشاء حسابك بنجاح، ويمكنك الآن البدء في استقبال وإدارة طلبات الشحن الخاصة بك.
-          </p>
+        <p style="margin-bottom:20px; line-height:1.6;">
+            ' . $welcomeMessage . '
+        </p>
 
-          <div style="background-color:#ffffff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;">
-              <p style="margin-top:0; font-weight:bold; color:#374151;">بيانات تسجيل الدخول:</p>
-              <p style="margin:10px 0;">البريد الإلكتروني: <span style="color:#2563eb; font-weight:bold;">' . $user->email . '</span></p>
-              <p style="margin:10px 0;">كلمة المرور المؤقتة:</p>
-              <div style="font-size:24px; font-weight:bold; text-align:center; color:#ffffff; background-color:#2563eb; padding:15px; border-radius:6px; margin:15px 0;">
-                  ' . e($plainPassword) . '
-              </div>
-          </div>
+        <div style="background-color:#ffffff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;">
+            <p style="margin-top:0; font-weight:bold; color:#374151;">بيانات تسجيل الدخول:</p>
+            <p style="margin:10px 0;">البريد الإلكتروني: <span style="color:#2563eb; font-weight:bold;">' . $user->email . '</span></p>
+            <p style="margin:10px 0;">كلمة المرور المؤقتة:</p>
+            <div style="font-size:24px; font-weight:bold; text-align:center; color:#ffffff; background-color:#2563eb; padding:15px; border-radius:6px; margin:15px 0;">
+                ' . e($plainPassword) . '
+            </div>
+        </div>
 
-          <p style="margin-bottom:20px; color:#ef4444; font-size:14px; font-weight:bold;">
-              ⚠️ ملاحظة أمنية: يرجى تسجيل الدخول وتغيير كلمة المرور هذه فوراً عند أول استخدام للحفاظ على أمان حسابك.
-          </p>
+        <p style="margin-bottom:20px; color:#ef4444; font-size:14px; font-weight:bold;">
+            ⚠️ ملاحظة أمنية: يرجى تسجيل الدخول وتغيير كلمة المرور هذه فوراً عند أول استخدام للحفاظ على أمان حسابك.
+        </p>
 
-          <p style="margin-top:20px; font-size:14px; color:#1f2937;">
-              بإمكانك الآن تحميل التطبيق وتسجيل الدخول لمباشرة العمل. إذا واجهت أي صعوبة، لا تتردد في التواصل مع فريق الدعم الفني.
-          </p>
+        <p style="margin-top:20px; font-size:14px; color:#1f2937;">
+            ' . ($isSubAdmin ? "يمكنك الآن التوجه إلى لوحة التحكم للبدء." : "بإمكانك الآن تحميل التطبيق وتسجيل الدخول لمباشرة العمل.") . ' إذا واجهت أي صعوبة، لا تتردد في التواصل مع فريق الدعم الفني.
+        </p>
 
-          <hr style="margin:25px 0; border: 0; border-top:1px solid #e5e7eb;">
+        <hr style="margin:25px 0; border: 0; border-top:1px solid #e5e7eb;">
 
-          <p style="font-size:14px; color:#6b7280; text-align:center;">
-              فريق نظام إدارة شحن البضائع<br>
-              نتمنى لك رحلات آمنة وموفقة.
-          </p>
+        <p style="font-size:14px; color:#6b7280; text-align:center;">
+            فريق نظام إدارة شحن البضائع<br>
+            نتمنى لك رحلات آمنة وموفقة.
+        </p>
 
-      </div>
-      ';
+    </div>
+    ';
 
         SendEmailJob::dispatch($user->email, $emailBody, $subject);
     }
@@ -319,7 +325,7 @@ class UserService
             'phone_number' => $data['phone_number']
         ];
         $this->userRepository->create($userData);
-        $this->send_email($data['email'], $password);
+        $this->send_email($data['email'], $password, true);
     }
     public function update_sub_admin(array $data, $id)
     {
@@ -337,9 +343,146 @@ class UserService
             ];
         }
         $this->userRepository->update($id, $data);
-         return [
+        return [
             'message' => 'تم تعديل الموظف بنجاح',
             'code' => 200
         ];
+    }
+    public function send_block_email(string $email, string $explanation, $endDate = null)
+    {
+        $user = $this->userRepository->find_by_email($email);
+        if (!$user) return;
+
+        $isPermanent = is_null($endDate);
+        $subject = $isPermanent
+            ? 'تنبيه: تم إغلاق حسابك بشكل نهائي - نظام شحن البضائع'
+            : 'تنبيه: تم تعليق حسابك مؤقتاً - نظام شحن البضائع';
+
+        $dateDisplay = $isPermanent
+            ? 'إغلاق نهائي (Permanent)'
+            : \Carbon\Carbon::parse($endDate)->format('Y-m-d') . ' الساعة 12:00 AM';
+
+        $statusMessage = $isPermanent
+            ? 'نود إعلامك بأنه قد تم <strong>إغلاق حسابك بشكل نهائي</strong>. لن تتمكن من الوصول إلى النظام أو استعادة البيانات المرتبطة بهذا الحساب.'
+            : 'نود إعلامك بأنه قد تم <strong>تعليق وصولك</strong> إلى النظام مؤقتاً. يمكنك العودة لاستخدام النظام بعد انتهاء فترة التعليق الموضحة أدناه.';
+
+        $footerNote = $isPermanent
+            ? 'هذا القرار نهائي ناتج عن مخالفة جسيمة لسياسات الاستخدام.'
+            : 'بمجرد حلول التاريخ المذكور، سيتم استعادة صلاحياتك تلقائياً. يرجى الالتزام بالسياسات لتجنب التعليق الدائم.';
+
+        $emailBody = '
+<div style="direction: rtl; font-family: Tahoma, Arial, sans-serif; font-size:16px; background-color:#f4f6f9; padding:20px; text-align:right; max-width:750px; margin:auto; border-radius:10px;">
+
+    <div style="text-align:center; margin-bottom:20px;">
+        <h2 style="color:#ef4444;">نظام إدارة شحن البضائع</h2>
+    </div>
+
+    <p style="color:#1f2937; font-size:18px; margin-bottom:15px;">
+        مرحباً <strong>' . $user->first_name . '</strong>،
+    </p>
+
+    <p style="margin-bottom:20px; line-height:1.6;">
+        ' . $statusMessage . '
+    </p>
+
+    <div style="background-color:#ffffff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;">
+        <p style="margin-top:0; font-weight:bold; color:#374151;">سبب الإجراء:</p>
+        <p style="margin:10px 0; color:#1f2937; line-height:1.6;">' . e($explanation) . '</p>
+
+        <hr style="margin:15px 0; border: 0; border-top:1px solid #f3f4f6;">
+
+        <p style="margin:10px 0;">حالة الحساب / تاريخ العودة:</p>
+        <div style="font-size:20px; font-weight:bold; text-align:center; color:#ffffff; background-color:' . ($isPermanent ? '#b91c1c' : '#374151') . '; padding:15px; border-radius:6px; margin:15px 0;">
+            ' . $dateDisplay . '
+        </div>
+    </div>
+
+    <p style="margin-bottom:20px; color:#1f2937; font-size:14px;">
+        ' . $footerNote . '
+    </p>
+
+    <p style="margin-top:20px; font-size:14px; color:#6b7280;">
+        إذا كنت تعتقد أن هذا الإجراء تم عن طريق الخطأ، يمكنك التواصل مع فريق الإدارة.
+    </p>
+
+    <hr style="margin:25px 0; border: 0; border-top:1px solid #e5e7eb;">
+
+    <p style="font-size:14px; color:#6b7280; text-align:center;">
+        فريق الإدارة - نظام إدارة شحن البضائع<br>
+    </p>
+
+</div>
+';
+
+        SendEmailJob::dispatch($user->email, $emailBody, $subject);
+    }
+    public function block(array $data)
+    {
+        $user = $this->userRepository->find_user($data['id']);
+        if ($user->status == 3) {
+            return [
+                'message' => 'المستخدم محظور بالفعل',
+                'code' => 422
+            ];
+        }
+        if ($user->role_id == 1) {
+            return [
+                'message' => 'لا يمكن حظر المدير الرئيسي',
+                'code' => 422
+            ];
+        }
+        $end_date = isset($data['days_number'])
+            ? today()->addDays((int) $data['days_number'])
+            : null;
+        $banData = [
+            'user_id' => $user->id,
+            'days_number' => $data['days_number'] ?? null,
+            'explaination' => $data['explaination'],
+            'end_date' => $end_date,
+            'previous_status' => $user->status
+        ];
+        $user->status = 3;
+        $this->userRepository->create_ban($banData);
+        $this->userRepository->save($user);
+        $this->send_block_email($user->email, $data['explaination'], $end_date);
+        return [
+            'message' => 'تم حظر المستخدم بنجاح',
+            'code' => 200
+        ];
+    }
+    public function unblock($id)
+    {
+        $user = $this->userRepository->find_user($id);
+        if (!$user) {
+            return [
+                'message' => 'المستخدم غير موجود',
+                'code' => 404
+            ];
+        }
+        if ($user->status != 3) {
+            return [
+                'message' => 'المستخدم غير محظور',
+                'code' => 422
+            ];
+        }
+        $ban = $this->userRepository->get_latest_ban($user->id);
+        $user->status = $ban->previous_status;
+
+        $this->userRepository->save($user);
+        return [
+            'message' => 'تم فك حظر المستخدم بنجاح',
+            'code' => 200
+        ];
+    }
+    public function process_expired_bans()
+    {
+        $expiredBans = $this->userRepository->get_expired_bans();
+        foreach ($expiredBans as $ban) {
+            $user = $this->userRepository->find_user($ban->user_id);
+            if ($user && $user->status == 3) {
+                $user->status = $ban->previous_status;
+                $this->userRepository->save($user);
+            }
+        }
     }
 }

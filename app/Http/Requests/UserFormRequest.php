@@ -74,6 +74,11 @@ class UserFormRequest extends FormRequest
                 'last_name'    => ['sometimes', 'string', 'max:255', $noHtml],
                 'phone_number' => ['sometimes', 'string', 'max:20', $noHtml],
             ],
+            'block' => [
+                'id' => ['required','integer','exists:users,id'],
+                'days_number' => ['sometimes','integer','min:1'],
+                'explaination' => ['required','string','max:255',$noHtml]
+            ],
             default => [],
         };
     }

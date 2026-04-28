@@ -69,6 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/subAdmins', [UserController::class, 'get_sub_admins']);
         Route::post('/subAdmin/create', [UserController::class, 'add_sub_admin']);
         Route::put('/subAdmin/update/{id}', [UserController::class, 'update_sub_admin']);
+        Route::post('/blockUser', [UserController::class, 'block']);
+        Route::get('/unblockUser/{id}', [UserController::class, 'unblock']);
     });
 
     // Employee-Admin Routes

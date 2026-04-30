@@ -97,5 +97,39 @@ class ShipmentController extends Controller
             'message' => $result['message']
         ], $result['status_code']);
     }
-  
+
+    public function get_shipments()
+    {
+        return response()->json(
+            $this->shipmentService->get_shipments()
+        );
+    }
+
+    public function get_shipments_for_user()
+    {
+        return response()->json(
+            $this->shipmentService->get_shipments_for_user()
+        );
+    }
+
+    public function get_shipments_by_driver_id($driver_id)
+    {
+        return response()->json(
+            $this->shipmentService->get_shipments_by_driver_id($driver_id)
+        );
+    }
+
+    public function get_shipments_for_driver()
+    {
+        return response()->json(
+            $this->shipmentService->get_shipments_for_driver()
+        );
+    }
+
+    public function get_shipments_with_insurance()
+    {
+        return response()->json(
+            $this->shipmentService->get_shipments_with_insurance()
+        );
+    }
 }

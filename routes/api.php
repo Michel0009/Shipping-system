@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/shipment/extend', [ShipmentController::class, 'extend_shipment']);
         Route::post('/shipment/send-to-driver', [ShipmentController::class, 'send_to_driver']);
         Route::post('/review', [ReviewController::class, 'create_review']);
+        Route::get('/shipments/client', [ShipmentController::class, 'get_shipments_for_user']);
     });
 
     // Driver Routes
@@ -53,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/shipment/respond', [ShipmentController::class, 'respond_to_request']);
         Route::post('/shipment/confirm-pickup', [ShipmentController::class, 'confirm_pickup']);
         Route::post('/shipment/confirm-delivery', [ShipmentController::class, 'confirm_delivery']);
+        Route::get('/shipments/driver', [ShipmentController::class, 'get_shipments_for_driver']);
 
         Route::get('/countContinuousSuccessfulShipments', [DriverController::class, 'count_continuous_successful_shipments']);
         Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
@@ -78,6 +80,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/driverDetails/{id}', [DriverController::class, 'get_driver_details_for_admin']);
         Route::post('/searchForDriver', [DriverController::class, 'search_for_driver']);
         Route::put('/editDriver/{id}', [DriverController::class, 'update_driver']);
+
+        Route::get('/shipments', [ShipmentController::class, 'get_shipments']);
+        Route::get('/shipments/driver/{driver_id}', [ShipmentController::class, 'get_shipments_by_driver_id']);
+        Route::get('/shipments/insured', [ShipmentController::class, 'get_shipments_with_insurance']);
     });
 
     // Client-Driver Routes

@@ -44,6 +44,7 @@ class DriverService
         $this->driverRepository->save($driver);
         return [
             'message' => 'تم تغيير الحالة بنجاح',
+            'availability' => $driver->availability,
         ];
     }
 
@@ -494,7 +495,10 @@ class DriverService
         $user = Auth::user();
         $driver = $this->driverRepository->find_by_user_ID($user->id);
 
-        return $driver->continuous_successful_shipments;
+        return [
+            'count' => $driver->continuous_successful_shipments,
+            'availability' => $driver->availability,
+        ];
     }
 
     public function set_driver_location(array $data)

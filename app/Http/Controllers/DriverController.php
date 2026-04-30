@@ -101,9 +101,7 @@ class DriverController extends Controller
     {
         $count = $this->driverService->count_continuous_successful_shipments();
 
-        return response()->json([
-            'count' => $count
-        ]);
+        return response()->json($count);
     }
 
     public function set_driver_location(DriverFormRequest $request)

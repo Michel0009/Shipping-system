@@ -350,4 +350,54 @@ class ShipmentService
             'status_code' => 200
         ];
     }
+
+    public function get_shipments()
+    {
+        $page = request('page', 1);
+        $cacheKey = "shipments_page_" . $page;
+
+        return Cache::tags(['shipments_all'])->remember($cacheKey, 900, function () {
+            return $this->shipmentRepository->get_shipments();
+        });
+    }
+
+    public function get_shipments_for_user()
+    {
+        $user = Auth::user();
+        $user_id = $user->id;
+        $page = request('page', 1);
+        $cacheKey = "user_{$user_id}_shipments_page_" . $page;
+
+        return Cache::tags(['shipments_user_' . $user_id])->remember($cacheKey, 900, function () use ($user_id) {
+            return $this->shipmentRepository->get_shipments_for_user($user_id);
+        });
+    }
+
+    public function get_shipments_for_driver()
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+        return $this->get_shipments_by_driver_id($driver->id);
+    }
+
+    public function get_shipments_by_driver_id($driver_id)
+    {
+        $page = request('page', 1);
+        $cacheKey = "driver_{$driver_id}_shipments_page_" . $page;
+
+        return Cache::tags(['shipments_driver_' . $driver_id])->remember($cacheKey, 900, function () use ($driver_id) {
+            return $this->shipmentRepository->get_shipments_for_driver($driver_id);
+        });
+    }
+
+    public function get_shipments_with_insurance()
+    {
+        $page = request('page', 1);
+        $cacheKey = "insured_shipments_page_" . $page;
+
+        return Cache::tags(['shipments_insured'])->remember($cacheKey, 900, function () {
+            return $this->shipmentRepository->get_shipments_with_insurance();
+        });
+    }
+
 }

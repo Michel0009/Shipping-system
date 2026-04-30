@@ -18,6 +18,11 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
+    const STATUS_ACTIVE = 0;
+    const STATUS_MUST_PAY = 1;
+    const STATUS_FROZEN = 2;
+    const STATUS_BLOCKED = 3;
     protected $fillable = [
         'role_id',
         'user_number',
@@ -52,6 +57,16 @@ class User extends Authenticatable
         ];
     }
 
+
+    public static function getStatusLabels(): array
+    {
+        return [
+            self::STATUS_ACTIVE => 'فعال',
+            self::STATUS_MUST_PAY => 'فعال ويجب عليه الدفع',
+            self::STATUS_FROZEN => 'مجمد',
+            self::STATUS_BLOCKED => 'محظور',
+        ];
+    }
     public function role()
     {
         return $this->belongsTo(Role::class);

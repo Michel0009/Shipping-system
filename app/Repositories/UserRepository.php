@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Ban;
 use App\Models\User;
 use App\Models\Refresh_token;
 
@@ -93,12 +94,7 @@ class UserRepository
     }
     public function get_sub_admins()
     {
-        $statusLabels = [
-            0 => 'فعال',
-            1 => 'فعال ويجب عليه الدفع',
-            2 => 'مجمد',
-            3 => 'محظور',
-        ];
+        $statusLabels = $this->getStatusLabels();
         return $this->user->where('role_id', 2)->select('id', 'user_number', 'first_name', 'last_name', 'phone_number', 'status')->get()->map(function ($user) use ($statusLabels) {
             $user->status_label = $statusLabels[$user->status] ?? null;
             return [
@@ -111,5 +107,23 @@ class UserRepository
             ];;
         });
 
+    }
+    public function getStatusLabels(): array
+    {
+        return $this->user->getStatusLabels();
+    }
+    public function create_ban(array $data)
+    {
+        return Ban::create($data);
+    }
+    public function get_latest_ban($userId)
+    {
+        return Ban::where('user_id', $userId)->latest()->first();
+    }
+    public function get_expired_bans()
+    {
+        return Ban::whereNotNull('end_date')
+            ->where('end_date', '<=', now())
+            ->get();
     }
 }

@@ -19,7 +19,8 @@ return new class extends Migration
                 ->cascadeOnUpdate();
             $table->unsignedInteger('days_number')->nullable();
             $table->longText('explaination');
-            $table->date('end_date');
+            $table->date('end_date')->nullable();
+            $table->unsignedTinyInteger('previous_status');
             $table->timestamps();
         });
     }

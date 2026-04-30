@@ -8,6 +8,7 @@ use App\Models\Driver;
 use App\Models\Governorate;
 use App\Models\License;
 use App\Models\Unconvicted_paper;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -124,16 +125,19 @@ class DriverRepository
     }
     public function get_drivers()
     {
+        $statusLabels = User::getStatusLabels();
         $drivers = $this->driver
             ->with([
-                'user:id,first_name,last_name,email,phone_number,user_number',
+                'user:id,first_name,last_name,email,phone_number,user_number,status',
                 'car.vehicle_type:id,type'
             ])
             ->withAvg('reviews', 'rate')
             ->paginate(5);
-        return $drivers->through(function ($driver) {
+        return $drivers->through(function ($driver) use ($statusLabels) {
+            $driver->user->status_label = $statusLabels[$driver->user->status] ?? null;
             return [
                 'id'           => $driver->id,
+                'user_id'      => $driver->user_id,
                 'first_name'   => $driver->user->first_name,
                 'last_name'    => $driver->user->last_name,
                 'email'        => $driver->user->email,
@@ -142,6 +146,7 @@ class DriverRepository
                 'vehicle_type' => $driver->car->vehicle_type->type,
                 'rating'       => number_format($driver->reviews_avg_rate, 2) ?? "0.00",
                 'user_number'  => $driver->user->user_number,
+                'status'       => $driver->user->status_label,
             ];
         });
     }
@@ -151,6 +156,7 @@ class DriverRepository
     }
     public function find_by_user_number($user_number)
     {
+        $statusLabels = User::getStatusLabels();
         $driver = $this->driver
             ->with([
                 'user',
@@ -166,6 +172,7 @@ class DriverRepository
         }
         return [
             'id'           => $driver->id,
+            'user_id'      => $driver->user_id,
             'first_name'   => $driver->user->first_name,
             'last_name'    => $driver->user->last_name,
             'email'        => $driver->user->email,
@@ -174,6 +181,7 @@ class DriverRepository
             'vehicle_type' => $driver->car->vehicle_type->type,
             'rating'       => number_format($driver->reviews_avg_rate, 2) ?? "0.00",
             'user_number'  => $driver->user->user_number,
+            'status'       => $statusLabels[$driver->user->status] ?? null,
         ];
     }
     public function get_driver_files($driver)

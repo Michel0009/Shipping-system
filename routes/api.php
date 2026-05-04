@@ -27,6 +27,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [UserController::class, 'get_profile']);
     Route::get('/vehicleTypes', [VehicleTypeController::class, 'vehicle_types']);
     Route::get('/driverImage/{id}', [DriverController::class, 'get_driver_image']);
+    Route::get('/shipment/id/{id}', [ShipmentController::class, 'get_shipment_by_id']);
+    Route::get('/shipment/number/{number}', [ShipmentController::class, 'get_shipment_by_number']);
 
     // Client Routes
     Route::middleware('role:client')->group(function () {
@@ -38,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/driver/{id}', [DriverController::class, 'get_driver_details']);
         Route::get('/shipment/extend', [ShipmentController::class, 'extend_shipment']);
         Route::post('/shipment/send-to-driver', [ShipmentController::class, 'send_to_driver']);
+        Route::get('/shipment/cancel-request-for-driver/{driver_id}', [ShipmentController::class, 'cancel_request']);
         Route::post('/review', [ReviewController::class, 'create_review']);
         Route::get('/shipments/client', [ShipmentController::class, 'get_shipments_for_user']);
     });
@@ -55,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/shipment/confirm-pickup', [ShipmentController::class, 'confirm_pickup']);
         Route::post('/shipment/confirm-delivery', [ShipmentController::class, 'confirm_delivery']);
         Route::get('/shipments/driver', [ShipmentController::class, 'get_shipments_for_driver']);
+        Route::get('/shipmentRequest/driver', [ShipmentController::class, 'get_requests_for_driver']);
 
         Route::get('/countContinuousSuccessfulShipments', [DriverController::class, 'count_continuous_successful_shipments']);
         Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
@@ -93,7 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/report', [ReportController::class, 'report']);
         Route::put('/editProfile', [UserController::class, 'edit_profile']);
 
-        Route::get('/notifications', [NotificationController::class, 'get_all_notifications']);
+        Route::get('/notifications/{latest}', [NotificationController::class, 'get_all_notifications']);
         Route::get('/newNotifications/count', [NotificationController::class, 'new_notifications_count']);
         Route::post('/saveDeviceToken', [NotificationController::class, 'save_device_token']);
     });

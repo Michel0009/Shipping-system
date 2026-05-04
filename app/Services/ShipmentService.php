@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\DriverRepository;
 use App\Repositories\ShipmentRepository;
+use App\Repositories\UserRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -14,11 +15,14 @@ class ShipmentService
 
     protected $driverRepository;
     protected $shipmentRepository;
+    protected $userRepository;
 
-    public function __construct(DriverRepository $driverRepository, ShipmentRepository $shipmentRepository)
+    public function __construct(DriverRepository $driverRepository, ShipmentRepository $shipmentRepository,
+                                    UserRepository $userRepository)
     {
         $this->driverRepository = $driverRepository;
         $this->shipmentRepository = $shipmentRepository;
+        $this->userRepository = $userRepository;
     }
 
     public function create_shipment(array $data)
@@ -62,6 +66,26 @@ class ShipmentService
         if (!$shipment) {
             abort(404, 'لا يوجد طلب شحنة حالياً');
         }
+        $userRequestPattern = "*driver_request_*_user_{$user->id}";
+        $keys = Cache::getRedis()->keys($userRequestPattern);
+
+        if (!empty($keys)) {
+            $fullKey = $keys[0];
+            $parts = explode('driver_request_', $fullKey);
+            $cleanKey = 'driver_request_' . $parts[1];
+            $requestData = Cache::get($cleanKey);
+                if ($requestData) {
+                    $driver = $this->driverRepository->find_driver($requestData['driver_id']);
+                    $user_driver = $this->userRepository->find_user($driver->user_id);
+                    $shipment['driver'] = [
+                        'driver_id' => $requestData['driver_id'],
+                        'first_name' => $user_driver->first_name,
+                        'last_name' => $user_driver->last_name,
+                        'expires_at' => $requestData['expires_at'],
+                    ];
+            }
+        }
+
         return $shipment;
     }
 
@@ -73,6 +97,12 @@ class ShipmentService
 
         if (!Cache::has($cacheKey)) {
             abort(404, 'لا يوجد طلب شحنة لحذفه');
+        }
+        $userRequestPattern = "*driver_request_*_user_{$user->id}";
+        $existingRequests = collect(Cache::getRedis()->keys($userRequestPattern));
+
+        if ($existingRequests->isNotEmpty()) {
+            abort(409, 'لديك طلب قيد الانتظار مع سائق آخر يمكنك إلغاء الطلب أو الانتظار الى حين رد السائق');
         }
         Cache::forget($cacheKey);
 
@@ -88,6 +118,12 @@ class ShipmentService
 
         if (!$shipment) {
             abort(404, 'لا يوجد طلب شحنة لتعديله');
+        }
+        $userRequestPattern = "*driver_request_*_user_{$user->id}";
+        $existingRequests = collect(Cache::getRedis()->keys($userRequestPattern));
+
+        if ($existingRequests->isNotEmpty()) {
+            abort(409, 'لديك طلب قيد الانتظار مع سائق آخر يمكنك إلغاء الطلب أو الانتظار الى حين رد السائق');
         }
 
         $updatedShipment = array_merge($shipment, $data);
@@ -196,6 +232,37 @@ class ShipmentService
         ];
     }
 
+    public function cancel_request($driver_id)
+    {
+        $user = Auth::user();
+        $requestKey = "driver_request_{$driver_id}_user_{$user->id}";
+        Cache::forget($requestKey);
+
+        return [
+            'message' => "تم إلغاء الطلب لهذا السائق",
+            'status_code' => 200
+        ];
+    }
+
+    public function get_requests_for_driver()
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+
+        $data = [];
+        $userRequestPattern = "*driver_request_{$driver->id}_user_*";
+        $keys = Cache::getRedis()->keys($userRequestPattern);
+
+        foreach ($keys as $fullKey) {
+            $parts = explode('driver_request_', $fullKey);
+            $cleanKey = 'driver_request_' . $parts[1];
+            $requestData = Cache::get($cleanKey);
+            if ($requestData) {
+                $data[] = $requestData;
+            }
+        }
+        return $data;
+    }
 
     public function respond_to_request(array $data)
     {
@@ -398,6 +465,43 @@ class ShipmentService
         return Cache::tags(['shipments_insured'])->remember($cacheKey, 900, function () {
             return $this->shipmentRepository->get_shipments_with_insurance();
         });
+    }
+
+    public function get_shipment_by_id($shipment_id)
+    {
+        $shipment = $this->shipmentRepository->find_shipment_by_id($shipment_id);
+        return $this->get_shipment_details($shipment);
+    }
+    public function get_shipment_by_number($shipment_number)
+    {
+        $shipment = $this->shipmentRepository->find_shipment_by_number($shipment_number);
+        return $this->get_shipment_details($shipment);
+    }
+
+    public function get_shipment_details($shipment)
+    {
+        if ($shipment == null) {
+            return [
+                'result' => 'هذه الشحنة غير موجودة',
+                'status_code' => 404
+            ];
+        }
+        $user = Auth::user();
+        if(($user->role_id == 3 && $user->id != $shipment->user_id) ||
+            ($user->role_id == 4 && $this->driverRepository->find_by_user_ID($user->id)->id != $shipment->driver_id)){
+                return [
+                    'result' => "هذه الشحنة غير موجودة أو غير مصرح لك التعامل معها",
+                    'status_code' => 403
+                ];
+        }
+        
+        $data = [];
+        $data[] = $shipment;
+        if($user->role_id != 4){
+            $driver = $this->driverRepository->find_driver($shipment->driver_id);
+            $user = $this->userRepository->find_user($driver->user_id);
+        }
+        return $data;
     }
 
 }

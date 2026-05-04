@@ -53,6 +53,38 @@ class ShipmentRepository
         return $this->shipment->where('id', $id)->first();
     }
 
+    public function find_shipment_by_id($id)
+    {
+        $shipment = $this->shipment->where('id', $id)->first();
+        $start = $shipment->governorates
+            ->where('pivot.start_end', 'start')
+            ->first();
+
+        $end = $shipment->governorates
+            ->where('pivot.start_end', 'end')
+            ->first();
+
+        $shipment['start_governorate'] = $start?->name;
+        $shipment['end_governorate'] = $end?->name;
+        return $shipment;
+    }
+
+    public function find_shipment_by_number($shipment_number)
+    {
+        $shipment = $this->shipment->where('shipment_number', $shipment_number)->first();
+        $start = $shipment->governorates
+            ->where('pivot.start_end', 'start')
+            ->first();
+
+        $end = $shipment->governorates
+            ->where('pivot.start_end', 'end')
+            ->first();
+            
+        $shipment['start_governorate'] = $start?->name;
+        $shipment['end_governorate'] = $end?->name;
+        return $shipment;
+    }
+
     public function save(Shipment $shipment): bool
     {
         return $shipment->save();
@@ -116,5 +148,12 @@ class ShipmentRepository
                 'end_governorate' => $end?->name,
             ];
         });
+    }
+
+    public function get_expired_shipments()
+    {
+        return $this->shipment->whereIn('status', ['قيد التوصيل', 'جارية'])
+            ->where('delivery_deadline', '<', now())
+            ->get();
     }
 }

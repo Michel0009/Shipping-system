@@ -38,11 +38,15 @@ class NotificationService
 
     }
 
-    public function get_all_notifications()
+    public function get_all_notifications(bool $latest)
     {
         $user = Auth::user();
 
-        $notificatios = $this->notificationRepository->get($user->id);
+        if ($latest) {
+            $notificatios = $this->notificationRepository->get($user->id);
+        } else {
+            $notificatios = $this->notificationRepository->get_limited($user->id);
+        }
 
         $this->notificationRepository->update(['status' => true], $user->id);
         

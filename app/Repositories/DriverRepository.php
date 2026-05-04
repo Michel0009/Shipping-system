@@ -221,4 +221,9 @@ class DriverRepository
 
         return $this->unconvicted_paper->where('driver_id', $driverId)->value('unconvicted_file');
     }
+
+    public function get_all_available_drivers()
+    {
+        return $this->driver->where('availability', true)->get();
+    }
 }

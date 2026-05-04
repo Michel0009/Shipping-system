@@ -71,6 +71,22 @@ class ShipmentController extends Controller
         ], $result['status_code']);
     }
 
+    public function cancel_request($driver_id)
+    {
+        $result = $this->shipmentService->cancel_request($driver_id);
+
+        return response()->json([
+            'message' => $result['message'],
+        ], $result['status_code']);
+    }
+
+    public function get_requests_for_driver()
+    {
+        $data = $this->shipmentService->get_requests_for_driver();
+
+        return response()->json($data);
+    }
+
     public function respond_to_request(ShipmentFormRequest $request)
     {
         $result = $this->shipmentService->respond_to_request($request->validated());
@@ -132,4 +148,17 @@ class ShipmentController extends Controller
             $this->shipmentService->get_shipments_with_insurance()
         );
     }
+
+    public function get_shipment_by_id($id)
+    {
+        $shipment = $this->shipmentService->get_shipment_by_id($id);
+        return response()->json($shipment);
+    }
+
+    public function get_shipment_by_number($number)
+    {
+        $shipment = $this->shipmentService->get_shipment_by_number($number);
+        return response()->json($shipment);
+    }
+
 }

@@ -18,6 +18,9 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->unsignedInteger('successful_shipments_number');
+            $table->unsignedBigInteger('value');
+            $table->boolean('received')->default(false);
+            $table->string('type');
             $table->timestamps();
         });
     }

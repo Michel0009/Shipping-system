@@ -56,32 +56,36 @@ class ShipmentRepository
     public function find_shipment_by_id($id)
     {
         $shipment = $this->shipment->where('id', $id)->first();
-        $start = $shipment->governorates
-            ->where('pivot.start_end', 'start')
-            ->first();
-
-        $end = $shipment->governorates
-            ->where('pivot.start_end', 'end')
-            ->first();
-
-        $shipment['start_governorate'] = $start?->name;
-        $shipment['end_governorate'] = $end?->name;
+        if($shipment){
+            $start = $shipment->governorates
+                ->where('pivot.start_end', 'start')
+                ->first();
+    
+            $end = $shipment->governorates
+                ->where('pivot.start_end', 'end')
+                ->first();
+    
+            $shipment['start_governorate'] = $start?->name;
+            $shipment['end_governorate'] = $end?->name;
+        }
         return $shipment;
     }
 
     public function find_shipment_by_number($shipment_number)
     {
         $shipment = $this->shipment->where('shipment_number', $shipment_number)->first();
-        $start = $shipment->governorates
-            ->where('pivot.start_end', 'start')
-            ->first();
+        if($shipment){
+            $start = $shipment->governorates
+                ->where('pivot.start_end', 'start')
+                ->first();
 
-        $end = $shipment->governorates
-            ->where('pivot.start_end', 'end')
-            ->first();
-            
-        $shipment['start_governorate'] = $start?->name;
-        $shipment['end_governorate'] = $end?->name;
+            $end = $shipment->governorates
+                ->where('pivot.start_end', 'end')
+                ->first();
+
+            $shipment['start_governorate'] = $start?->name;
+            $shipment['end_governorate'] = $end?->name;
+        }
         return $shipment;
     }
 
@@ -155,5 +159,12 @@ class ShipmentRepository
         return $this->shipment->whereIn('status', ['قيد التوصيل', 'جارية'])
             ->where('delivery_deadline', '<', now())
             ->get();
+    }
+
+    public function get_active_shipments_for_user($user_id)
+    {
+        return $this->shipment->where('user_id', $user_id)
+                ->whereIn('status', ['قيد التوصيل', 'جارية'])
+                    ->select('id', 'user_id', 'driver_id', 'shipment_number', 'price', 'status')->latest()->get();
     }
 }

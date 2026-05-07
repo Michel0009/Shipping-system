@@ -152,13 +152,30 @@ class ShipmentController extends Controller
     public function get_shipment_by_id($id)
     {
         $shipment = $this->shipmentService->get_shipment_by_id($id);
+        if(isset($shipment['status_code'])){
+            return response()->json([
+                'message' => $shipment['result']
+            ], $shipment['status_code']);
+        }
         return response()->json($shipment);
     }
 
     public function get_shipment_by_number($number)
     {
         $shipment = $this->shipmentService->get_shipment_by_number($number);
+        if(isset($shipment['status_code'])){
+            return response()->json([
+                'message' => $shipment['result']
+            ], $shipment['status_code']);
+        }
         return response()->json($shipment);
+    }
+
+    public function get_active_shipments_for_user()
+    {
+        return response()->json(
+            $this->shipmentService->get_active_shipments_for_user()
+        );
     }
 
 }

@@ -486,22 +486,111 @@ class ShipmentService
                 'status_code' => 404
             ];
         }
-        $user = Auth::user();
-        if(($user->role_id == 3 && $user->id != $shipment->user_id) ||
-            ($user->role_id == 4 && $this->driverRepository->find_by_user_ID($user->id)->id != $shipment->driver_id)){
+        $currentUser = Auth::user();
+        if(($currentUser->role_id == 3 && $currentUser->id != $shipment->user_id) ||
+            ($currentUser->role_id == 4 && $this->driverRepository->find_by_user_ID($currentUser->id)->id != $shipment->driver_id)){
                 return [
                     'result' => "هذه الشحنة غير موجودة أو غير مصرح لك التعامل معها",
                     'status_code' => 403
                 ];
         }
-        
-        $data = [];
-        $data[] = $shipment;
-        if($user->role_id != 4){
+        $responseDetails = [
+            'shipment' => $shipment->makeHidden(['governorates']),
+            'route_geometry' => null,
+            'live_tracking' => null,
+            'driver' => null,
+            'client' => null
+        ];
+        if($currentUser->role_id != 4){
             $driver = $this->driverRepository->find_driver($shipment->driver_id);
-            $user = $this->userRepository->find_user($driver->user_id);
+            $driverUser = $this->userRepository->find_user($driver->user_id);
+            $responseDetails['driver'] = [
+                'id' => $driver->id,
+                'first_name' => $driverUser->first_name,
+                'last_name' => $driverUser->last_name,
+                'phone_number' => $driverUser->phone_number,
+                'user_number' => $driverUser->user_number
+            ];
         }
-        return $data;
+        if($currentUser->role_id != 3){
+            $client = $this->userRepository->find_user($shipment->user_id);
+            $responseDetails['client'] = [
+                'id' => $client->id,
+                'first_name' => $client->first_name,
+                'last_name' => $client->last_name,
+                'phone_number' => $client->phone_number,
+                'user_number' => $client->user_number
+            ];
+            $responseDetails['shipment'] = $responseDetails['shipment']->makeHidden(['pin', 'qr_pin']);
+        }
+        // Get the shipment path on OSRM
+        $startCoords = "{$shipment->start_position_lng},{$shipment->start_position_lat}";
+        $endCoords = "{$shipment->end_position_lng},{$shipment->end_position_lat}";
+
+        $cacheKey = "shipment_route_{$shipment->id}";
+        
+        $responseDetails['route_geometry'] = Cache::remember($cacheKey, now()->addDays(30), function () use ($startCoords, $endCoords) {
+            $fullRouteUrl = "http://router.project-osrm.org/route/v1/driving/{$startCoords};{$endCoords}?overview=full&geometries=geojson";
+            
+            $response = @file_get_contents($fullRouteUrl);
+            if ($response) {
+                $data = json_decode($response, true);
+                if (isset($data['routes'][0])) {
+                    return $data['routes'][0]['geometry'];
+                }
+            }
+            return null;
+        });
+
+        if ($shipment->status === 'قيد التوصيل') {
+            $driverLocation = Cache::get("location_driver_{$shipment->driver_id}");
+
+            if ($driverLocation) {
+                $currentDriverCoords = "{$driverLocation['lng']},{$driverLocation['lat']}";
+                $liveUrl = "http://router.project-osrm.org/route/v1/driving/{$currentDriverCoords};{$endCoords}?overview=false";
+                
+                $liveResponse = @file_get_contents($liveUrl);
+
+                if ($liveResponse) {
+                    $liveData = json_decode($liveResponse, true);
+                    if (isset($liveData['routes'][0])) {
+                        $route = $liveData['routes'][0];
+                        $responseDetails['live_tracking'] = [
+                            'remaining_distance_km' => round($route['distance'] / 1000, 2),
+                            'remaining_duration_mins' => round($route['duration'] / 60)
+                        ];
+                    }
+                }
+            } else {
+                $responseDetails['live_tracking'] = [
+                    'error' => 'موقع السائق غير متوفر حالياً'
+                ];
+            }
+        }
+        return $responseDetails;
+    }
+
+    public function get_active_shipments_for_user()
+    {
+        $user = Auth::user();
+        $shipments = $this->shipmentRepository->get_active_shipments_for_user($user->id);
+        if ($shipments->isEmpty()){
+            return [
+                'result' => "لا يوجد شحنات نشطة",
+            ];
+        }
+        foreach ($shipments as $shipment) {
+            $driver = $this->driverRepository->find_driver($shipment->driver_id);
+            $driverUser = $this->userRepository->find_user($driver->user_id);
+            $shipment['driver'] = [
+                'id' => $driver->id,
+                'first_name' => $driverUser->first_name,
+                'last_name' => $driverUser->last_name,
+                'phone_number' => $driverUser->phone_number,
+                'user_number' => $driverUser->user_number
+            ];
+        }
+        return $shipments;
     }
 
 }

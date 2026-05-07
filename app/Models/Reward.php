@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reward extends Model
 {
-    protected $fillable = ['driver_id', 'successful_shipments_number'];
+    protected $fillable = ['driver_id', 'successful_shipments_number', 'value', 'received', 'type'];
 
     public function driver()
     {

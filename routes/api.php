@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/shipment/cancel-request-for-driver/{driver_id}', [ShipmentController::class, 'cancel_request']);
         Route::post('/review', [ReviewController::class, 'create_review']);
         Route::get('/shipments/client', [ShipmentController::class, 'get_shipments_for_user']);
+        Route::get('/activeShipments/client', [ShipmentController::class, 'get_active_shipments_for_user']);
     });
 
     // Driver Routes

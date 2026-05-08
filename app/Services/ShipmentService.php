@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Driver;
 use App\Repositories\DriverRepository;
 use App\Repositories\ShipmentRepository;
 use App\Repositories\UserRepository;
@@ -591,6 +592,43 @@ class ShipmentService
             ];
         }
         return $shipments;
+    }
+
+    public function get_shipments_by_date(array $request)
+    {
+        $currentUser = Auth::user();
+        $shipments = [];
+
+        if($currentUser->role_id == 4){
+            $driver = $this->driverRepository->find_by_user_ID($currentUser->id);
+            $shipments = $this->shipmentRepository->get_driver_shipments_by_date($driver->id, $request['start_date'], $request['end_date']);
+        }
+        else if($currentUser->role_id == 3){
+            $shipments = $this->shipmentRepository->get_client_shipments_by_date($currentUser->id, $request['start_date'], $request['end_date']);
+        }
+        return $shipments;
+        
+    }
+
+    public function reward(Driver $driver)
+    {
+        if ($driver->continuous_successful_shipments == 15) {
+
+            $reward = ['driver_id', 'successful_shipments_number', 'value', 'received', 'type'];
+            $carRepository = app(\App\Repositories\CarRepository::class);
+            $coefficient = $carRepository->get_coefficients_reward();
+            $reward = [
+                'driver_id' => $driver->id,
+                'successful_shipments_number' => 15,
+                'value' => $coefficient['value'],
+                'type' => 'reward',
+            ];
+
+            $this->driverRepository->create_reward($reward);
+
+            $driver->continuous_successful_shipments = 0;
+            $this->driverRepository->save($driver);
+        }
     }
 
 }

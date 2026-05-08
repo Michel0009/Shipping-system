@@ -274,8 +274,17 @@ class UserService
 
         $average = $this->reviewRepository->get_driver_average_rate($driver->id);
         $badge = $this->driverRepository->get_badge($driver);
-
         $userData['driver_id'] = $driver->id;
+
+        // $shipmentRepository = app(\App\Repositories\ShipmentRepository::class);
+        // $shipment = $shipmentRepository->get_shipments_statisics_for_driver($driver->id);
+
+        // $amountToPay = $shipment['unpaid_amount'] * 0.15;
+        // $my_earnings = $shipment['unpaid_amount'] - $amountToPay;
+
+        
+
+        // $statisics = [];
 
         return [
             'user' => $userData,
@@ -283,6 +292,8 @@ class UserService
             'driver_governorates' => $driver_governorates,
             'average_rate' => round($average, 2),
             'badge' => $badge,
+            // 'statisics' => $statisics
+
         ];
     }
 

@@ -41,6 +41,11 @@ class CoefficientSeeder extends Seeder
                 'type' => 'insurance',
                 'value' => 0.3,
             ],
+            [
+                'name' => 'reward',
+                'type' => 'reward',
+                'value' => 50000,
+            ],
         ]);
     }
 }

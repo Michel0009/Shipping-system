@@ -101,5 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifications/{latest}', [NotificationController::class, 'get_all_notifications']);
         Route::get('/newNotifications/count', [NotificationController::class, 'new_notifications_count']);
         Route::post('/saveDeviceToken', [NotificationController::class, 'save_device_token']);
+
+        Route::post('/shipments/searchByDate', [ShipmentController::class, 'get_shipments_by_date']);
     });
 });

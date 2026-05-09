@@ -237,7 +237,7 @@ class DriverService
             ];
         });
         $car = Cache::remember("driver_{$id}_car", $ttl, function () use ($id) {
-            return $this->carRepository->find_by_driver_ID($id);
+            return $this->carRepository->find_all_by_driver_ID($id);
         });
         $files = Cache::remember("driver_{$id}_docs", $ttl, function () use ($car, $driver) {
             $carFiles = $this->carRepository->get_car_files($car);

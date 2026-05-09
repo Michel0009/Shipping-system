@@ -79,6 +79,10 @@ class DriverFormRequest extends FormRequest
                 'car_papers.*.car_file'     => ['required_with:car_papers', 'file', 'mimes:pdf', $fileLimit],
                 'version'                   => ['required', 'integer'],
             ],
+            'tax_driver' => [
+                'driver_id' => 'required|integer|exists:drivers,id',
+                'value' => 'required|integer',
+            ],
             default => [],
         };
     }
@@ -128,6 +132,13 @@ class DriverFormRequest extends FormRequest
                 'min.numeric' => '.يجب أن يكون :attribute :min عام أو أحدث',
                 'car_papers.*.type.required_with' => 'يجب تحديد نوع الورقة لكل ملف مرفوع في أوراق السيارة.',
                 'car_papers.*.car_file.required_with' => 'يجب إرفاق الملف لكل نوع ورقة يتم اختياره في أوراق السيارة.',
+            ],
+            'tax_driver' => [
+                'driver_id.required' => 'معرف السائق مطلوب',
+                'driver_id.exists' => 'السائق غير موجود',
+                'driver_id.integer' => 'يجب أن يكون المعرف رقماً صحيحاً',
+                'value.required' => 'قيمة الضريبة مطلوبة',
+                'value.integer' => 'يجب أن تكون قيمة الضريبة رقماً صحيحاً',
             ],
             default => [],
         };

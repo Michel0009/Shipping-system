@@ -7,6 +7,7 @@ use App\Models\Coefficient;
 use App\Models\Driver;
 use App\Models\Governorate;
 use App\Models\License;
+use App\Models\Reward;
 use App\Models\Unconvicted_paper;
 use App\Models\User;
 use Carbon\Carbon;
@@ -225,5 +226,10 @@ class DriverRepository
     public function get_all_available_drivers()
     {
         return $this->driver->where('availability', true)->get();
+    }
+
+    public function create_reward(array $data)
+    {
+        return Reward::create($data);
     }
 }

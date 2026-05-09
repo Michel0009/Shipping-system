@@ -220,21 +220,27 @@ class ShipmentRepository
     public function get_shipments_statisics_for_driver($driver_id)
     {
         $total = $this->shipment->where('driver_id', $driver_id)->count();
+        $total_price = $this->shipment->where('driver_id', $driver_id)->sum('price');
         $unpaid_count = $this->shipment->where('driver_id', $driver_id)->where('paid', false)->count();
         $unpaid_amount = $this->shipment->where('driver_id', $driver_id)->where('paid', false)->sum('price');
         $all_bonuses = Reward::where('driver_id', $driver_id)->where('type', 'reward')->get();
-        $bonuses = $all_bonuses->where('driver_id', $driver_id)->where('received', false)->get();
-        $all_taxes = Reward::where('driver_id', $driver_id)->where('type', 'taxe')->get();
-        $taxes = $all_taxes->where('received', false)->get();
+        $unreceived_bonuses = $all_bonuses->where('received', false);
+        $unreceived_bonuses_sum = $unreceived_bonuses->sum('value');
+        $all_taxes = Reward::where('driver_id', $driver_id)->where('type', 'tax')->get();
+        $unreceived_taxes = $all_taxes->where('received', false);
+        $unreceived_taxes_sum = $unreceived_taxes->sum('value');
 
         return [
             'total' => $total,
+            'total_price' => $total_price,
             'unpaid_count' => $unpaid_count,
             'unpaid_amount' => $unpaid_amount,
             'all_bonuses' => $all_bonuses,
-            'bonuses' => $bonuses,
+            'unreceived_bonuses' => $unreceived_bonuses,
+            'unreceived_bonuses_sum' => $unreceived_bonuses_sum,
             'all_taxes' => $all_taxes,
-            'taxes' => $taxes,
+            'unreceived_taxes' => $unreceived_taxes,
+            'unreceived_taxes_sum' => $unreceived_taxes_sum,
         ];
 
     }

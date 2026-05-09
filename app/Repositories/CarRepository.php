@@ -79,7 +79,7 @@ class CarRepository
 
     public function get_coefficients_reward()
     {
-        return $this->coefficient->where('type', 'reward')->get();
+        return $this->coefficient->where('type', 'reward')->first();
     }
 
 }

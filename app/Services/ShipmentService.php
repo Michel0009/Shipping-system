@@ -412,6 +412,7 @@ class ShipmentService
             'تأكيد استلام الشحنة',
             $data_body
         );
+        $this->reward($driver);
 
         return [
             'message' => "تم تسليم الشحنة بنجاح",
@@ -612,9 +613,8 @@ class ShipmentService
 
     public function reward(Driver $driver)
     {
-        if ($driver->continuous_successful_shipments == 15) {
+        if ($driver->continuous_successful_shipments >= 15) {
 
-            $reward = ['driver_id', 'successful_shipments_number', 'value', 'received', 'type'];
             $carRepository = app(\App\Repositories\CarRepository::class);
             $coefficient = $carRepository->get_coefficients_reward();
             $reward = [
@@ -624,10 +624,10 @@ class ShipmentService
                 'type' => 'reward',
             ];
 
-            $this->driverRepository->create_reward($reward);
-
+            $create = $this->driverRepository->create_reward($reward);
             $driver->continuous_successful_shipments = 0;
             $this->driverRepository->save($driver);
+            
         }
     }
 

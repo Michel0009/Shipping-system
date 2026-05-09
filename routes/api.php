@@ -87,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/driverDetails/{id}', [DriverController::class, 'get_driver_details_for_admin']);
         Route::post('/searchForDriver', [DriverController::class, 'search_for_driver']);
         Route::put('/editDriver/{id}', [DriverController::class, 'update_driver']);
+        Route::post('/tax/driver', [DriverController::class, 'tax_driver']);
 
         Route::get('/shipments', [ShipmentController::class, 'get_shipments']);
         Route::get('/shipments/driver/{driver_id}', [ShipmentController::class, 'get_shipments_by_driver_id']);

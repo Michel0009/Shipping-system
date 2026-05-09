@@ -524,4 +524,19 @@ class DriverService
 
         return true;
     }
+
+    public function tax_driver(array $data)
+    {
+        $reward = [
+            'driver_id' => $data['driver_id'],
+            'successful_shipments_number' => 0,
+            'value' => $data['value'],
+            'type' => 'tax',
+        ];
+        $create = $this->driverRepository->create_reward($reward);
+        if($create){
+            return true;
+        }
+        return false;
+    }
 }

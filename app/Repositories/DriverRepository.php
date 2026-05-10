@@ -232,4 +232,9 @@ class DriverRepository
     {
         return Reward::create($data);
     }
+
+    public function get_badges()
+    {
+        return Badge::get();
+    }
 }

@@ -29,6 +29,13 @@ class ReportFormRequest extends FormRequest
             'type' => ['required', 'string', 'max:255', new NoHtml],
             'description' => ['required', 'string', new NoHtml],
         ],
+        'send_warning' => [
+            'user_id' => 'required|exists:users,id',
+            'warning_text' => ['required', 'string', new NoHtml],
+        ],
+        'send_notification_for_all' => [
+            'notification_text' => ['required', 'string', new NoHtml],
+        ],
 
         default => [],
       };
@@ -48,6 +55,17 @@ class ReportFormRequest extends FormRequest
 
                 'reported_id.required' => 'رقم المستخدم المبلّغ عنه مطلوب',
                 'reported_id.exists' => 'رقم المستخدم المبلّغ عنه غير موجود',
+            ],
+            'send_warning' => [
+                'warning_text.required' => 'نص التنبه مطلوب',
+                'warning_text.string' => 'نص التنبيه يجب أن يكون نصاً',
+
+                'user_id.required' => 'رقم المستخدم مطلوب',
+                'user_id.exists' => 'رقم المستخدم غير موجود',
+            ],
+            'send_notification_for_all' => [
+                'notification_text.required' => 'نص الإشعار مطلوب',
+                'notification_text.string' => 'نص الإشعار يجب أن يكون نصاً',
             ],
 
             default => [],

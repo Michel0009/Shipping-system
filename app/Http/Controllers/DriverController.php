@@ -124,4 +124,10 @@ class DriverController extends Controller
             return response()->json(['message' => 'حدث خطأً ما'], 400);
         }
     }
+
+    public function get_badges()
+    {
+        $badges = $this->driverService->get_badges();
+        return response()->json($badges);
+    }
 }

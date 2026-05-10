@@ -126,4 +126,9 @@ class UserRepository
             ->where('end_date', '<=', now())
             ->get();
     }
+
+    public function get_all_app_users()
+    {
+        return $this->user->whereIn('role_id', [3, 4])->get();
+    }
 }

@@ -539,4 +539,9 @@ class DriverService
         }
         return false;
     }
+
+    public function get_badges()
+    {
+        return $this->driverRepository->get_badges();
+    }
 }

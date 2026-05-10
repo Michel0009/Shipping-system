@@ -92,6 +92,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/shipments', [ShipmentController::class, 'get_shipments']);
         Route::get('/shipments/driver/{driver_id}', [ShipmentController::class, 'get_shipments_by_driver_id']);
         Route::get('/shipments/insured', [ShipmentController::class, 'get_shipments_with_insurance']);
+
+        Route::get('/reports', [ReportController::class, 'get_reports']);
+        Route::post('/sendWarning', [ReportController::class, 'send_warning']);
+        Route::post('/sendNotificationForAll', [ReportController::class, 'send_notification_for_all']);
+        Route::get('/badges', [DriverController::class, 'get_badges']);
+        // Route::put('/badge', [DriverController::class, 'edit_badge']);
     });
 
     // Client-Driver Routes

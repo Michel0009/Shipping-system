@@ -289,7 +289,10 @@ class ShipmentService
                 []
             );
 
-            return "تم رفض الطلب";
+            return [
+                'message' => "تم رفض الطلب",
+                'shipment_data' => null
+            ];
         }
         $shipmentNumber = time() . rand(100, 999);
         $pin = random_int(100000, 999999);
@@ -318,8 +321,37 @@ class ShipmentService
             $data_body
         );
 
-        return "تم قبول الطلب وإنشاء الشحنة";
+        $shipment_data = [
+            'id' => $shipment->id,
+            'start_position_lat' => $shipment->start_position_lat,
+            'start_position_lng' => $shipment->start_position_lng,
+            'end_position_lat' => $shipment->end_position_lat,
+            'end_position_lng' => $shipment->end_position_lng,
+        ];
+        $shipment_data['path'] = $this->get_shipment_path($shipment);
+
+        return [
+            'message' => "تم قبول الطلب وإنشاء الشحنة",
+            'shipment_data' => $shipment_data
+        ];
     }
+
+    private function get_shipment_path($shipment){
+        
+        $startCoords = "{$shipment->start_position_lng},{$shipment->start_position_lat}";
+        $endCoords = "{$shipment->end_position_lng},{$shipment->end_position_lat}";
+        $fullRouteUrl = "http://router.project-osrm.org/route/v1/driving/{$startCoords};{$endCoords}?overview=full&geometries=geojson";
+        
+        $response = @file_get_contents($fullRouteUrl);
+        if ($response) {
+            $data = json_decode($response, true);
+            if (isset($data['routes'][0])) {
+                return $data['routes'][0]['geometry'];
+            }
+        }
+        return null;
+    }
+    
 
     public function confirm_pickup(array $data)
     {

@@ -62,6 +62,12 @@ class UserController extends Controller
     public function block(UserFormRequest $request){
         $result = $this->userService->block($request->validated());
 
+        if(isset($result['deadline'])){
+            return response()->json([
+                'message' => $result['message'],
+                'deadline' => $result['deadline']
+            ], $result['code']);
+        }
         return response()->json([
             'message' => $result['message'],
         ], $result['code']);

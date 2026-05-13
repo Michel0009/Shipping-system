@@ -14,9 +14,9 @@ class NotificationController extends Controller
         $this->notificationService = $notificationService;
     }
 
-    public function get_all_notifications()
+    public function get_all_notifications($latest)
     {
-        return response()->json($this->notificationService->get_all_notifications()); 
+        return response()->json($this->notificationService->get_all_notifications($latest)); 
     }
     public function new_notifications_count()
     {

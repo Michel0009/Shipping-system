@@ -28,6 +28,10 @@ class NotificationRepository
     {
         return $this->notification->where('user_id', $user_id)->latest()->get();
     }
+    public function get_limited($user_id)
+    {
+        return $this->notification->where('user_id', $user_id)->latest()->limit(15)->get();
+    }
 
     public function count($user_id)
     {

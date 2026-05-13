@@ -254,15 +254,8 @@ class DriverService
             return $this->reviewRepository->get_driver_average_rate($id);
         });
         $badge =  $this->driverRepository->get_badge($driver);
-        $shipments = Cache::remember("driver_{$id}_shipments", 600, function () use ($id) {
-            return $this->shipmentRepository->get_shipments_by_driver_id($id);
-        });
-        if ($shipments->isNotEmpty()) {
-            $amountToPay = $shipments->sum('price');
-            $amountToPay *= 0.15;
-        } else {
-            $amountToPay = 0;
-        }
+        $statistics = $this->shipmentRepository->get_shipments_statisics_for_driver($id);
+        $statistics['amount_to_pay'] = $statistics['unpaid_amount'] * 0.15;
         return [
             'driver' => $driver,
             'user' => $user,
@@ -271,7 +264,7 @@ class DriverService
             'driver_governorates' => $driver_governorates,
             'average_rate' => round($average_rate, 2),
             'badge' => $badge,
-            'amount_to_pay' => $amountToPay
+            'statistics'=> $statistics
         ];
     }
     public function search_for_driver(array $data)
@@ -523,5 +516,20 @@ class DriverService
         ], now()->addHours(1));
 
         return true;
+    }
+
+    public function tax_driver(array $data)
+    {
+        $reward = [
+            'driver_id' => $data['driver_id'],
+            'successful_shipments_number' => 0,
+            'value' => $data['value'],
+            'type' => 'tax',
+        ];
+        $create = $this->driverRepository->create_reward($reward);
+        if($create){
+            return true;
+        }
+        return false;
     }
 }

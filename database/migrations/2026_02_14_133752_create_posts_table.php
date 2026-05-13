@@ -32,6 +32,7 @@ return new class extends Migration
             $table->unsignedBigInteger('max_price')->nullable();
             $table->unsignedBigInteger('min_price')->nullable();
             $table->date('last_date');
+            $table->boolean('finished')->default(false);
             $table->timestamps();
         });
     }

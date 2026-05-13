@@ -112,4 +112,16 @@ class DriverController extends Controller
             'message' => 'تم تحديث موقع السائق'
         ]);
     }
+
+    public function tax_driver(DriverFormRequest $request)
+    {
+        $validated = $request->validated();
+        $result = $this->driverService->tax_driver($validated);
+        if ($result) {
+            return response()->json(['message' => 'تم فرض ضريبة على هذا السائق'], 200);
+        }
+        else {
+            return response()->json(['message' => 'حدث خطأً ما'], 400);
+        }
+    }
 }

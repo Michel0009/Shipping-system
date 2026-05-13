@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Driver;
 use App\Repositories\DriverRepository;
 use App\Repositories\ShipmentRepository;
+use App\Repositories\UserRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -14,11 +16,14 @@ class ShipmentService
 
     protected $driverRepository;
     protected $shipmentRepository;
+    protected $userRepository;
 
-    public function __construct(DriverRepository $driverRepository, ShipmentRepository $shipmentRepository)
+    public function __construct(DriverRepository $driverRepository, ShipmentRepository $shipmentRepository,
+                                    UserRepository $userRepository)
     {
         $this->driverRepository = $driverRepository;
         $this->shipmentRepository = $shipmentRepository;
+        $this->userRepository = $userRepository;
     }
 
     public function create_shipment(array $data)
@@ -62,6 +67,26 @@ class ShipmentService
         if (!$shipment) {
             abort(404, 'لا يوجد طلب شحنة حالياً');
         }
+        $userRequestPattern = "*driver_request_*_user_{$user->id}";
+        $keys = Cache::getRedis()->keys($userRequestPattern);
+
+        if (!empty($keys)) {
+            $fullKey = $keys[0];
+            $parts = explode('driver_request_', $fullKey);
+            $cleanKey = 'driver_request_' . $parts[1];
+            $requestData = Cache::get($cleanKey);
+                if ($requestData) {
+                    $driver = $this->driverRepository->find_driver($requestData['driver_id']);
+                    $user_driver = $this->userRepository->find_user($driver->user_id);
+                    $shipment['driver'] = [
+                        'driver_id' => $requestData['driver_id'],
+                        'first_name' => $user_driver->first_name,
+                        'last_name' => $user_driver->last_name,
+                        'expires_at' => $requestData['expires_at'],
+                    ];
+            }
+        }
+
         return $shipment;
     }
 
@@ -73,6 +98,12 @@ class ShipmentService
 
         if (!Cache::has($cacheKey)) {
             abort(404, 'لا يوجد طلب شحنة لحذفه');
+        }
+        $userRequestPattern = "*driver_request_*_user_{$user->id}";
+        $existingRequests = collect(Cache::getRedis()->keys($userRequestPattern));
+
+        if ($existingRequests->isNotEmpty()) {
+            abort(409, 'لديك طلب قيد الانتظار مع سائق آخر يمكنك إلغاء الطلب أو الانتظار الى حين رد السائق');
         }
         Cache::forget($cacheKey);
 
@@ -88,6 +119,12 @@ class ShipmentService
 
         if (!$shipment) {
             abort(404, 'لا يوجد طلب شحنة لتعديله');
+        }
+        $userRequestPattern = "*driver_request_*_user_{$user->id}";
+        $existingRequests = collect(Cache::getRedis()->keys($userRequestPattern));
+
+        if ($existingRequests->isNotEmpty()) {
+            abort(409, 'لديك طلب قيد الانتظار مع سائق آخر يمكنك إلغاء الطلب أو الانتظار الى حين رد السائق');
         }
 
         $updatedShipment = array_merge($shipment, $data);
@@ -196,6 +233,37 @@ class ShipmentService
         ];
     }
 
+    public function cancel_request($driver_id)
+    {
+        $user = Auth::user();
+        $requestKey = "driver_request_{$driver_id}_user_{$user->id}";
+        Cache::forget($requestKey);
+
+        return [
+            'message' => "تم إلغاء الطلب لهذا السائق",
+            'status_code' => 200
+        ];
+    }
+
+    public function get_requests_for_driver()
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+
+        $data = [];
+        $userRequestPattern = "*driver_request_{$driver->id}_user_*";
+        $keys = Cache::getRedis()->keys($userRequestPattern);
+
+        foreach ($keys as $fullKey) {
+            $parts = explode('driver_request_', $fullKey);
+            $cleanKey = 'driver_request_' . $parts[1];
+            $requestData = Cache::get($cleanKey);
+            if ($requestData) {
+                $data[] = $requestData;
+            }
+        }
+        return $data;
+    }
 
     public function respond_to_request(array $data)
     {
@@ -344,6 +412,7 @@ class ShipmentService
             'تأكيد استلام الشحنة',
             $data_body
         );
+        $this->reward($driver);
 
         return [
             'message' => "تم تسليم الشحنة بنجاح",
@@ -398,6 +467,168 @@ class ShipmentService
         return Cache::tags(['shipments_insured'])->remember($cacheKey, 900, function () {
             return $this->shipmentRepository->get_shipments_with_insurance();
         });
+    }
+
+    public function get_shipment_by_id($shipment_id)
+    {
+        $shipment = $this->shipmentRepository->find_shipment_by_id($shipment_id);
+        return $this->get_shipment_details($shipment);
+    }
+    public function get_shipment_by_number($shipment_number)
+    {
+        $shipment = $this->shipmentRepository->find_shipment_by_number($shipment_number);
+        return $this->get_shipment_details($shipment);
+    }
+
+    public function get_shipment_details($shipment)
+    {
+        if ($shipment == null) {
+            return [
+                'result' => 'هذه الشحنة غير موجودة',
+                'status_code' => 404
+            ];
+        }
+        $currentUser = Auth::user();
+        if(($currentUser->role_id == 3 && $currentUser->id != $shipment->user_id) ||
+            ($currentUser->role_id == 4 && $this->driverRepository->find_by_user_ID($currentUser->id)->id != $shipment->driver_id)){
+                return [
+                    'result' => "هذه الشحنة غير موجودة أو غير مصرح لك التعامل معها",
+                    'status_code' => 403
+                ];
+        }
+        $responseDetails = [
+            'shipment' => $shipment->makeHidden(['governorates']),
+            'route_geometry' => null,
+            'live_tracking' => null,
+            'driver' => null,
+            'client' => null
+        ];
+        if($currentUser->role_id != 4){
+            $driver = $this->driverRepository->find_driver($shipment->driver_id);
+            $driverUser = $this->userRepository->find_user($driver->user_id);
+            $responseDetails['driver'] = [
+                'id' => $driver->id,
+                'first_name' => $driverUser->first_name,
+                'last_name' => $driverUser->last_name,
+                'phone_number' => $driverUser->phone_number,
+                'user_number' => $driverUser->user_number
+            ];
+        }
+        if($currentUser->role_id != 3){
+            $client = $this->userRepository->find_user($shipment->user_id);
+            $responseDetails['client'] = [
+                'id' => $client->id,
+                'first_name' => $client->first_name,
+                'last_name' => $client->last_name,
+                'phone_number' => $client->phone_number,
+                'user_number' => $client->user_number
+            ];
+            $responseDetails['shipment'] = $responseDetails['shipment']->makeHidden(['pin', 'qr_pin']);
+        }
+        // Get the shipment path on OSRM
+        $startCoords = "{$shipment->start_position_lng},{$shipment->start_position_lat}";
+        $endCoords = "{$shipment->end_position_lng},{$shipment->end_position_lat}";
+
+        $cacheKey = "shipment_route_{$shipment->id}";
+        
+        $responseDetails['route_geometry'] = Cache::remember($cacheKey, now()->addDays(30), function () use ($startCoords, $endCoords) {
+            $fullRouteUrl = "http://router.project-osrm.org/route/v1/driving/{$startCoords};{$endCoords}?overview=full&geometries=geojson";
+            
+            $response = @file_get_contents($fullRouteUrl);
+            if ($response) {
+                $data = json_decode($response, true);
+                if (isset($data['routes'][0])) {
+                    return $data['routes'][0]['geometry'];
+                }
+            }
+            return null;
+        });
+
+        if ($shipment->status === 'قيد التوصيل') {
+            $driverLocation = Cache::get("location_driver_{$shipment->driver_id}");
+
+            if ($driverLocation) {
+                $currentDriverCoords = "{$driverLocation['lng']},{$driverLocation['lat']}";
+                $liveUrl = "http://router.project-osrm.org/route/v1/driving/{$currentDriverCoords};{$endCoords}?overview=false";
+                
+                $liveResponse = @file_get_contents($liveUrl);
+
+                if ($liveResponse) {
+                    $liveData = json_decode($liveResponse, true);
+                    if (isset($liveData['routes'][0])) {
+                        $route = $liveData['routes'][0];
+                        $responseDetails['live_tracking'] = [
+                            'remaining_distance_km' => round($route['distance'] / 1000, 2),
+                            'remaining_duration_mins' => round($route['duration'] / 60)
+                        ];
+                    }
+                }
+            } else {
+                $responseDetails['live_tracking'] = [
+                    'error' => 'موقع السائق غير متوفر حالياً'
+                ];
+            }
+        }
+        return $responseDetails;
+    }
+
+    public function get_active_shipments_for_user()
+    {
+        $user = Auth::user();
+        $shipments = $this->shipmentRepository->get_active_shipments_for_user($user->id);
+        if ($shipments->isEmpty()){
+            return [
+                'result' => "لا يوجد شحنات نشطة",
+            ];
+        }
+        foreach ($shipments as $shipment) {
+            $driver = $this->driverRepository->find_driver($shipment->driver_id);
+            $driverUser = $this->userRepository->find_user($driver->user_id);
+            $shipment['driver'] = [
+                'id' => $driver->id,
+                'first_name' => $driverUser->first_name,
+                'last_name' => $driverUser->last_name,
+                'phone_number' => $driverUser->phone_number,
+                'user_number' => $driverUser->user_number
+            ];
+        }
+        return $shipments;
+    }
+
+    public function get_shipments_by_date(array $request)
+    {
+        $currentUser = Auth::user();
+        $shipments = [];
+
+        if($currentUser->role_id == 4){
+            $driver = $this->driverRepository->find_by_user_ID($currentUser->id);
+            $shipments = $this->shipmentRepository->get_driver_shipments_by_date($driver->id, $request['start_date'], $request['end_date']);
+        }
+        else if($currentUser->role_id == 3){
+            $shipments = $this->shipmentRepository->get_client_shipments_by_date($currentUser->id, $request['start_date'], $request['end_date']);
+        }
+        return $shipments;
+        
+    }
+
+    public function reward(Driver $driver)
+    {
+        if ($driver->continuous_successful_shipments >= 15) {
+
+            $carRepository = app(\App\Repositories\CarRepository::class);
+            $coefficient = $carRepository->get_coefficients_reward();
+            $reward = [
+                'driver_id' => $driver->id,
+                'successful_shipments_number' => 15,
+                'value' => $coefficient['value'],
+                'type' => 'reward',
+            ];
+
+            $create = $this->driverRepository->create_reward($reward);
+            $driver->continuous_successful_shipments = 0;
+            $this->driverRepository->save($driver);
+            
+        }
     }
 
 }

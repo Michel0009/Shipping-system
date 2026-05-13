@@ -69,6 +69,10 @@ class ShipmentFormRequest extends FormRequest
             'shipment_id' => 'required|exists:shipments,id',
             'pin' => 'required|string|size:6',
         ],
+        'get_shipments_by_date' => [
+            'start_date' => 'required|date|before_or_equal:today',
+            'end_date'   => 'required|date|before_or_equal:today|after_or_equal:start_date',
+        ],
         
         default => [],
       };
@@ -172,6 +176,15 @@ class ShipmentFormRequest extends FormRequest
                 'pin.required' => 'رمز التحقق مطلوب',
                 'pin.string' => 'رمز التحقق غير صالح',
                 'pin.size' => 'رمز التحقق يجب أن يكون مكون من 6 أرقام',
+            ],
+            'get_shipments_by_date' => [
+                'start_date.required' => 'تاريخ البدء مطلوب',
+                'start_date.date' => 'يجب إدخال تاريخ صحيح لبداية البحث',
+                'start_date.before_or_equal' => 'تاريخ البدء لا يمكن أن يكون في المستقبل',
+                'end_date.required' => 'تاريخ الانتهاء مطلوب',
+                'end_date.date' => 'يجب إدخال تاريخ صحيح لنهاية البحث',
+                'end_date.before_or_equal' => 'تاريخ الانتهاء لا يمكن أن يكون في المستقبل',
+                'end_date.after_or_equal' => 'يجب أن يكون تاريخ الانتهاء بعد أو يساوِي تاريخ البدء',
             ],
 
             default => [],

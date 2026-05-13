@@ -18,7 +18,6 @@ class ShipmentObserver
      */
     public function updated(Shipment $shipment): void
     {
-        Cache::forget("driver_{$shipment->driver_id}_shipments");
         $this->clearCache($shipment);
     }
 

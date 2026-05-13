@@ -22,7 +22,8 @@ class Post extends Model
         'end_location_details',
         'max_price',
         'min_price',
-        'last_date'
+        'last_date',
+        'finished'
     ];
 
     public function user()

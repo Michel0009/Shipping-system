@@ -6,10 +6,12 @@ use App\Jobs\SendEmailJob;
 use App\Repositories\CarRepository;
 use App\Repositories\DriverRepository;
 use App\Repositories\ReviewRepository;
+use App\Repositories\ShipmentRepository;
 use App\Repositories\UserRepository;
 use Exception;
 use finfo;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -22,17 +24,20 @@ class UserService
     protected $carRepository;
     protected $notificationRepository;
     protected $reviewRepository;
+    protected $shipmentRepository;
 
     public function __construct(
         UserRepository $userRepository,
         DriverRepository $driverRepository,
         CarRepository $carRepository,
-        ReviewRepository $reviewRepository
+        ReviewRepository $reviewRepository,
+        ShipmentRepository $shipmentRepository
     ) {
         $this->userRepository = $userRepository;
         $this->driverRepository = $driverRepository;
         $this->carRepository = $carRepository;
         $this->reviewRepository = $reviewRepository;
+        $this->shipmentRepository = $shipmentRepository;
     }
 
     public function create_driver(array $request)
@@ -274,8 +279,15 @@ class UserService
 
         $average = $this->reviewRepository->get_driver_average_rate($driver->id);
         $badge = $this->driverRepository->get_badge($driver);
-
         $userData['driver_id'] = $driver->id;
+
+        $shipmentRepository = app(\App\Repositories\ShipmentRepository::class);
+        $statisics = $shipmentRepository->get_shipments_statisics_for_driver($driver->id);
+
+        $amount_to_pay = $statisics['unpaid_amount'] * 0.15;
+        $my_earnings = $statisics['unpaid_amount'] - $amount_to_pay;
+        $statisics['amount_to_pay'] = $amount_to_pay;
+        $statisics['my_earnings'] = $my_earnings;
 
         return [
             'user' => $userData,
@@ -283,6 +295,8 @@ class UserService
             'driver_governorates' => $driver_governorates,
             'average_rate' => round($average, 2),
             'badge' => $badge,
+            'statisics' => $statisics
+
         ];
     }
 
@@ -431,6 +445,39 @@ class UserService
                 'code' => 422
             ];
         }
+        if ($user->role_id == 3) {
+            if ($this->shipmentRepository->get_latest_active_shipment_by_user_id($user->id)) {
+                return [
+                    'message' => 'لا يمكن حظر العميل لوجود شحنات نشطة',
+                    'deadline' => $this->shipmentRepository->get_latest_active_shipment_by_user_id($user->id)->delivery_deadline,
+                    'code' => 422
+                ];
+            }
+            if (Cache::getRedis()->keys("*driver_request_*_user_{$user->id}")) {
+                return [
+                    'message' => 'لا يمكن حظر العميل لوجود طلب شحنة قيد الانتظار',
+                    'code' => 422
+                ];
+            }
+        } elseif ($user->role_id == 4) {
+            if ($this->shipmentRepository->get_latest_active_shipment_by_driver_id($user->driver->id)) {
+                return [
+                    'message' => 'لا يمكن حظر السائق لوجود شحنات نشطة',
+                    'deadline' => $this->shipmentRepository->get_latest_active_shipment_by_driver_id($user->driver->id)->delivery_deadline,
+                    'code' => 422
+                ];
+            }
+            if (Cache::getRedis()->keys("*driver_request_{$user->driver->id}_user_*")) {
+                return [
+                    'message' => 'لا يمكن حظر السائق لوجود طلب شحنة قيد الانتظار',
+                    'code' => 422
+                ];
+            }
+            if ($user->driver->availability) {
+                $user->driver->availability = false;
+                $this->driverRepository->save($user->driver);
+            }
+        }
         $end_date = isset($data['days_number'])
             ? today()->addDays((int) $data['days_number'])
             : null;
@@ -444,6 +491,7 @@ class UserService
         $user->status = 3;
         $this->userRepository->create_ban($banData);
         $this->userRepository->save($user);
+
         $this->send_block_email($user->email, $data['explaination'], $end_date);
         return [
             'message' => 'تم حظر المستخدم بنجاح',

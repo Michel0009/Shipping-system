@@ -76,7 +76,7 @@ class UserFormRequest extends FormRequest
             ],
             'block' => [
                 'id' => ['required','integer','exists:users,id'],
-                'days_number' => ['sometimes','integer','min:1'],
+                'days_number' => ['sometimes','nullable','integer','min:1'],
                 'explaination' => ['required','string','max:255',$noHtml]
             ],
             default => [],

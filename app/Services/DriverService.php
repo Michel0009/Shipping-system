@@ -242,6 +242,12 @@ class DriverService
         $files = Cache::remember("driver_{$id}_docs", $ttl, function () use ($car, $driver) {
             $carFiles = $this->carRepository->get_car_files($car);
             $driverFiles = $this->driverRepository->get_driver_files($driver);
+            foreach ($carFiles as $file) {
+                $file->download_url = url("/api/documents/download/{$file->id}");
+            }
+            foreach ($driverFiles as $file) {
+                $file->download_url = url("/api/documents/download/{$file->id}");
+            }
             return [
                 'car_files' => $carFiles,
                 'driver_files' => $driverFiles
@@ -264,7 +270,7 @@ class DriverService
             'driver_governorates' => $driver_governorates,
             'average_rate' => round($average_rate, 2),
             'badge' => $badge,
-            'statistics'=> $statistics
+            'statistics' => $statistics
         ];
     }
     public function search_for_driver(array $data)
@@ -527,9 +533,25 @@ class DriverService
             'type' => 'tax',
         ];
         $create = $this->driverRepository->create_reward($reward);
-        if($create){
+        if ($create) {
             return true;
         }
         return false;
+    }
+    public function download_document($type , $id)
+    {
+        $document = $this->driverRepository->find_document($type, $id);
+        if (!$document) {
+            abort(404, "Document not found");
+        }
+
+        if (!Storage::disk('local')->exists($document)) {
+            abort(404, "File does not exist");
+        }
+
+        return Storage::disk('local')->download(
+            $document,
+            basename($document)
+        );
     }
 }

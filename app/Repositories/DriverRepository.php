@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Badge;
+use App\Models\Car_paper;
 use App\Models\Coefficient;
 use App\Models\Driver;
 use App\Models\Governorate;
@@ -231,5 +232,16 @@ class DriverRepository
     public function create_reward(array $data)
     {
         return Reward::create($data);
+    }
+    public function find_document($type, $id)
+    {
+        if ($type === 'license') {
+            return $this->license->where('id', $id)->value('license_file');
+        } elseif ($type === 'unconvicted') {
+            return $this->unconvicted_paper->where('id', $id)->value('unconvicted_file');
+        } elseif ($type === 'car') {
+            return Car_paper::where('id', $id)->value('car_file');
+        }
+        return null;
     }
 }

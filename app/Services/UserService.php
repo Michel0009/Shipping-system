@@ -430,6 +430,66 @@ class UserService
 
         SendEmailJob::dispatch($user->email, $emailBody, $subject);
     }
+    public function send_unblock_email(string $email)
+    {
+        $user = $this->userRepository->find_by_email($email);
+        if (!$user) return;
+
+        $subject = 'تنبيه: تم إعادة تفعيل حسابك - نظام شحن البضائع';
+
+        $statusMessage = 'يسرنا إعلامك بأنه قد تم <strong>إعادة تفعيل وصولك</strong> إلى النظام بنجاح. يمكنك الآن تسجيل الدخول واستخدام كافة الصلاحيات المتاحة لك بشكل طبيعي.';
+
+        $footerNote = 'نرجو منك الالتزام بسياسات الاستخدام والتعليمات الخاصة بالنظام لضمان استمرارية الخدمة دون أي انقطاع مستقبلي.';
+
+        $emailBody = '
+<div style="direction: rtl; font-family: Tahoma, Arial, sans-serif; font-size:16px; background-color:#f4f6f9; padding:20px; text-align:right; max-width:750px; margin:auto; border-radius:10px;">
+
+    <div style="text-align:center; margin-bottom:20px;">
+        <h2 style="color:#059669;">نظام إدارة شحن البضائع</h2>
+    </div>
+
+    <p style="color:#1f2937; font-size:18px; margin-bottom:15px;">
+        مرحباً <strong>' . $user->first_name . '</strong>،
+    </p>
+
+    <p style="margin-bottom:20px; line-height:1.6;">
+        ' . $statusMessage . '
+    </p>
+
+    <div style="background-color:#ffffff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;">
+        <p style="margin-top:0; font-weight:bold; color:#374151;">حالة الحساب الحالية:</p>
+
+        <div style="font-size:20px; font-weight:bold; text-align:center; color:#ffffff; background-color:#059669; padding:15px; border-radius:6px; margin:15px 0;">
+            نشط (Active)
+        </div>
+
+        <hr style="margin:15px 0; border: 0; border-top:1px solid #f3f4f6;">
+
+        <p style="margin:10px 0; color:#1f2937; line-height:1.6; text-align:center;">
+            يمكنك الآن العودة إلى العمل عبر الرابط التالي:<br>
+            <a href="' . config('app.url') . '" style="display:inline-block; margin-top:10px; padding:10px 20px; background-color:#3b82f6; color:#ffffff; text-decoration:none; border-radius:5px;">تسجيل الدخول للنظام</a>
+        </p>
+    </div>
+
+    <p style="margin-bottom:20px; color:#1f2937; font-size:14px;">
+        ' . $footerNote . '
+    </p>
+
+    <p style="margin-top:20px; font-size:14px; color:#6b7280;">
+        إذا واجهت أي مشكلة أثناء تسجيل الدخول، يرجى التواصل مع الدعم الفني.
+    </p>
+
+    <hr style="margin:25px 0; border: 0; border-top:1px solid #e5e7eb;">
+
+    <p style="font-size:14px; color:#6b7280; text-align:center;">
+        فريق الإدارة - نظام إدارة شحن البضائع<br>
+    </p>
+
+</div>
+';
+
+        SendEmailJob::dispatch($user->email, $emailBody, $subject);
+    }
     public function block(array $data)
     {
         $user = $this->userRepository->find_user($data['id']);
@@ -488,6 +548,8 @@ class UserService
             'end_date' => $end_date,
             'previous_status' => $user->status
         ];
+        $user->tokens()->delete();
+        $this->userRepository->revoke_user_tokens($user->id);
         $user->status = 3;
         $this->userRepository->create_ban($banData);
         $this->userRepository->save($user);
@@ -517,10 +579,12 @@ class UserService
         $user->status = $ban->previous_status;
 
         $this->userRepository->save($user);
+        $this->send_unblock_email($user->email);
         return [
             'message' => 'تم فك حظر المستخدم بنجاح',
             'code' => 200
         ];
+
     }
     public function process_expired_bans()
     {

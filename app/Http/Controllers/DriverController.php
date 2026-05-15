@@ -70,7 +70,7 @@ class DriverController extends Controller
         $drivers = $this->driverService->get_drivers();
         return response()->json($drivers);
     }
-    public function get_driver_details_for_admin(DriverFormRequest $request, $id)
+    public function get_driver_details_for_admin(DriverFormRequest $request)
     {
         $driverId = $request->id;
         $driver = $this->driverService->get_driver_details_for_admin($driverId);
@@ -119,9 +119,13 @@ class DriverController extends Controller
         $result = $this->driverService->tax_driver($validated);
         if ($result) {
             return response()->json(['message' => 'تم فرض ضريبة على هذا السائق'], 200);
-        }
-        else {
+        } else {
             return response()->json(['message' => 'حدث خطأً ما'], 400);
         }
+    }
+    public function download_documnet(DriverFormRequest $request)
+    {
+        $validated = $request->validated();
+        return $this->driverService->download_document($validated['type'], $validated['id']);
     }
 }

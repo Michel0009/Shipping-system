@@ -23,6 +23,12 @@ class DriverFormRequest extends FormRequest
                 'id' => $this->route('id'),
             ]);
         }
+        if (in_array($method, ['download_documnet'])) {
+            $this->merge([
+                'type' => $this->route('type'),
+                'id' => $this->route('id'),
+            ]);
+        }
     }
     public function rules(): array
     {
@@ -82,6 +88,10 @@ class DriverFormRequest extends FormRequest
             'tax_driver' => [
                 'driver_id' => 'required|integer|exists:drivers,id',
                 'value' => 'required|integer',
+            ],
+            'download_documnet' => [
+                'type' => 'required|string|in:license,unconvicted,car',
+                'id' => 'required|integer',
             ],
             default => [],
         };

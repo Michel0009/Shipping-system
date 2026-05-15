@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShipmentController;
@@ -44,6 +45,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/review', [ReviewController::class, 'create_review']);
         Route::get('/shipments/client', [ShipmentController::class, 'get_shipments_for_user']);
         Route::get('/activeShipments/client', [ShipmentController::class, 'get_active_shipments_for_user']);
+
+        Route::post('/post/create', [PostController::class, 'create_post']);
+        Route::put('/post/update', [PostController::class, 'update_prices']);
+        Route::delete('/post/{id}', [PostController::class, 'delete_post']);
+        Route::get('/posts/client', [PostController::class, 'get_my_posts']);
     });
 
     // Driver Routes

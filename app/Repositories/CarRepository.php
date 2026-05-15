@@ -82,4 +82,29 @@ class CarRepository
         return $this->coefficient->where('type', 'reward')->first();
     }
 
+    public function get_suitable_vehicles(array $dims)
+    {
+        return $this->vehicle_type->where('min_weight', '<=', $dims['weight'])
+            ->where('max_weight', '>=', $dims['weight'])
+            ->where('min_length', '<=', $dims['length'])
+            ->where('max_length', '>=', $dims['length'])
+            ->where('min_width', '<=', $dims['width'])
+            ->where('max_width', '>=', $dims['width'])
+            ->where('min_height', '<=', $dims['height'])
+            ->where('max_height', '>=', $dims['height'])
+            ->get();
+    }
+
+    public function get_fuel_prices()
+    {
+        return $this->coefficient->where('type', 'fuel_price')
+            ->pluck('value')
+            ->toArray();
+    }
+
+    public function get_coefficients_calculation()
+    {
+        return $this->coefficient->pluck('value', 'name')->toArray();
+    }
+
 }

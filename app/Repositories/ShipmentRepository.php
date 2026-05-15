@@ -236,10 +236,10 @@ class ShipmentRepository
             'unpaid_count' => $unpaid_count,
             'unpaid_amount' => $unpaid_amount,
             'all_bonuses' => $all_bonuses,
-            'unreceived_bonuses' => $unreceived_bonuses,
+            // 'unreceived_bonuses' => $unreceived_bonuses,
             'unreceived_bonuses_sum' => $unreceived_bonuses_sum,
             'all_taxes' => $all_taxes,
-            'unreceived_taxes' => $unreceived_taxes,
+            // 'unreceived_taxes' => $unreceived_taxes,
             'unreceived_taxes_sum' => $unreceived_taxes_sum,
         ];
 

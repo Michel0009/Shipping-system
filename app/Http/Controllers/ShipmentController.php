@@ -176,6 +176,13 @@ class ShipmentController extends Controller
         );
     }
 
+    public function get_active_shipments_for_driver()
+    {
+        return response()->json(
+            $this->shipmentService->get_active_shipments_for_driver()
+        );
+    }
+
     public function get_shipments_by_date(ShipmentFormRequest $request){
         return response()->json(
             $this->shipmentService->get_shipments_by_date($request->validated())

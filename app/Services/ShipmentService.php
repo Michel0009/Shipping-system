@@ -627,6 +627,29 @@ class ShipmentService
         return $shipments;
     }
 
+    public function get_active_shipments_for_driver()
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+        $shipments = $this->shipmentRepository->get_active_shipments_for_driver($driver->id);
+        if ($shipments->isEmpty()){
+            return [
+                'result' => "لا يوجد شحنات نشطة",
+            ];
+        }
+        foreach ($shipments as $shipment) {
+            $shipment['path'] = $this->get_shipment_path((object)$shipment);
+            $client = $this->userRepository->find_user($shipment->user_id);
+            $shipment['client'] = [
+                'first_name' => $client->first_name,
+                'last_name' => $client->last_name,
+                'phone_number' => $client->phone_number,
+                'user_number' => $client->user_number
+            ];
+        }
+        return $shipments;
+    }
+
     public function get_shipments_by_date(array $request)
     {
         $currentUser = Auth::user();

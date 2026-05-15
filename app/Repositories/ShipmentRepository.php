@@ -169,6 +169,30 @@ class ShipmentRepository
                     ->select('id', 'user_id', 'driver_id', 'shipment_number', 'price', 'status')->latest()->get();
     }
 
+    public function get_active_shipments_for_driver($driver_id)
+    {
+        $shipments = $this->shipment->where('driver_id', $driver_id)
+            ->select('id', 'user_id', 'driver_id', 'shipment_number', 'price', 'status', 
+                'start_position_lat', 'start_position_lng', 'end_position_lat', 'end_position_lng')
+            ->whereIn('status', ['قيد التوصيل', 'جارية'])->latest()->get();
+
+        foreach ($shipments as $shipment) {
+            $start = $shipment->governorates
+                ->where('pivot.start_end', 'start')
+                ->first();
+            $end = $shipment->governorates
+                ->where('pivot.start_end', 'end')
+                ->first();
+
+            $shipment->start_governorate = $start?->name;
+            $shipment->end_governorate = $end?->name;
+
+            $shipment->makeHidden('governorates');
+        }
+
+        return $shipments;
+    }
+
     public function get_driver_shipments_by_date($driver_id, $start_date, $end_date)
     {
         $shipments = $this->shipment->where('driver_id', $driver_id)

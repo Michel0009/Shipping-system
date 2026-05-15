@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ContractTermController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
@@ -66,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/shipment/confirm-delivery', [ShipmentController::class, 'confirm_delivery']);
         Route::get('/shipments/driver', [ShipmentController::class, 'get_shipments_for_driver']);
         Route::get('/shipmentRequest/driver', [ShipmentController::class, 'get_requests_for_driver']);
+        Route::get('/activeShipments/driver', [ShipmentController::class, 'get_active_shipments_for_driver']);
 
         Route::get('/countContinuousSuccessfulShipments', [DriverController::class, 'count_continuous_successful_shipments']);
         Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
@@ -84,6 +86,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/subAdmin/update/{id}', [UserController::class, 'update_sub_admin']);
         Route::post('/blockUser', [UserController::class, 'block']);
         Route::get('/unblockUser/{id}', [UserController::class, 'unblock']);
+
+        Route::post('/contractTerm/create', [ContractTermController::class, 'create_contract_term']);
+        Route::get('/contractTerms', [ContractTermController::class, 'get_contract_terms']);
+        Route::delete('/contractTerm/{id}', [ContractTermController::class, 'delete_contract_term']);
     });
 
     // Employee-Admin Routes

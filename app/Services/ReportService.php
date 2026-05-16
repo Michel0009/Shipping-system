@@ -56,6 +56,11 @@ class ReportService
       );
   }
 
+  public function get_user_warnings($user_id)
+  {
+      return $this->reportRepository->get_user_warnings($user_id);
+  }
+
   public function send_notification_for_all(array $data)
   {
       $users = $this->userRepository->get_all_app_users();

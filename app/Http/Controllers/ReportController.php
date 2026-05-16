@@ -39,6 +39,12 @@ class ReportController extends Controller
         ]);
     }
 
+    public function get_user_warnings($user_id)
+    {
+        $warnings = $this->reportService->get_user_warnings($user_id);
+        return response()->json($warnings);
+    }
+
     public function send_notification_for_all(ReportFormRequest $request)
     {
         $this->reportService->send_notification_for_all($request->validated());

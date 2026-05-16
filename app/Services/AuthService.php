@@ -189,9 +189,6 @@ class AuthService
       if ($user['status'] == 3) {
         return 'banned';
       }
-      if ($user['status'] == 2) {
-        return 'frozen';
-      }
 
       $first_login_driver = false;
       if ($user['role_id'] == 4 && $user['number_of_change_password'] == 0) {
@@ -260,9 +257,6 @@ class AuthService
 
       if ($user->status == 3) {
           return 'banned';
-      }
-      if ($user->status == 2) {
-          return 'frozen';
       }
       // New Access
       $newAccessToken = $user->createToken('AccessToken')->plainTextToken;

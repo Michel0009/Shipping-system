@@ -107,7 +107,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/reports', [ReportController::class, 'get_reports']);
         Route::post('/sendWarning', [ReportController::class, 'send_warning']);
+        Route::get('/warnings/user/{id}', [ReportController::class, 'get_user_warnings']);
         Route::post('/sendNotificationForAll', [ReportController::class, 'send_notification_for_all']);
+        Route::get('/activateUser/{id}', [UserController::class, 'activate_user_account']);
         Route::get('/badges', [DriverController::class, 'get_badges']);
         // Route::put('/badge', [DriverController::class, 'edit_badge']);
     });

@@ -494,4 +494,33 @@ class UserService
             }
         }
     }
+
+    public function activate_user_account($id)
+    {
+        $user = $this->userRepository->find_user($id);
+        if (!$user) {
+            return [
+                'message' => 'المستخدم غير موجود',
+                'code' => 404
+            ];
+        }
+        if ($user->status == 3) {
+            return [
+                'message' => 'المستخدم محظور',
+                'code' => 422
+            ];
+        }
+        else if ($user->status == 0) {
+            return [
+                'message' => 'حساب المستخدم مفعل مسبقا',
+                'code' => 422
+            ];
+        }
+        $user->status = 0;
+        $this->userRepository->save($user);
+        return [
+            'message' => 'تم تفعيل حساب المستخدم بنجاح',
+            'code' => 200
+        ];
+    }
 }

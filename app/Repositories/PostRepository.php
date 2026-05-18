@@ -64,4 +64,41 @@ class PostRepository
         });
     }
     
+    public function attachDriver(Post $post, $driverId, array $pivotData)
+    {
+        return $post->drivers()->syncWithoutDetaching([
+            $driverId => $pivotData
+        ]);
+    }
+
+    public function detachDriver(Post $post, $driverId)
+    {
+        return $post->drivers()->detach($driverId);
+    }
+
+    public function getPostWithApplicants($id)
+    {
+        return $this->post->where('id', $id)
+            ->with([
+                'governorates',
+                'drivers.user',
+                'drivers.car.vehicle_type',
+                'drivers.reviews',
+                'drivers.badge'
+            ])->firstOrFail();
+    }
+
+    public function getAvailablePostsForVehicle($type)
+    {
+        $posts = $this->post->where('finished', false)
+            ->where('weight', '>=', $type->min_weight)->where('weight', '<=', $type->max_weight)
+            ->where('length', '>=', $type->min_length)->where('length', '<=', $type->max_length)
+            ->where('width', '>=', $type->min_width)->where('width', '<=', $type->max_width)
+            ->where('height', '>=', $type->min_height)->where('height', '<=', $type->max_height)
+            ->with('governorates')
+            ->latest()
+            ->get();
+        return $this->transform_posts($posts);
+    }
+    
 }

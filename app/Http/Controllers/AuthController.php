@@ -126,9 +126,6 @@ class AuthController extends Controller
         if ($result === 'banned') {
             return response()->json(['message' => 'تم حظر هذا الحساب، يرجى التواصل مع الإدارة'], 403);
         }
-        if ($result === 'frozen') {
-            return response()->json(['message' => 'تم تجميد هذا الحساب، يرجى دفع التكاليف المترتبة عليك'], 403);
-        }
         if (!$result) {
             return response()->json(['message' =>
             'البريد الإلكتروني لا يتطابق مع كلمة المرور، يرجى المحاولة مرة أخرى'], 401);
@@ -182,10 +179,6 @@ class AuthController extends Controller
 
         if ($result === 'banned') {
             return response()->json(['message' => 'banned'], 403);
-        }
-
-        if ($result === 'frozen') {
-            return response()->json(['message' => 'frozen'], 403);
         }
 
         if (!$result) {

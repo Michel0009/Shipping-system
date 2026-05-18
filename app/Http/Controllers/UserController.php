@@ -79,4 +79,12 @@ class UserController extends Controller
             'message' => $result['message'],
         ], $result['code']);
     }
+
+    public function activate_user_account($id){
+        $result = $this->userService->activate_user_account($id);
+
+        return response()->json([
+            'message' => $result['message'],
+        ], $result['code']);
+    }
 }

@@ -32,7 +32,7 @@ class Post extends Model
     }
     public function drivers()
     {
-        return $this->belongsToMany(Driver::class)->withPivot('date','price');
+        return $this->belongsToMany(Driver::class)->withPivot('date','price')->withTimestamps();
     }
     public function governorates()
     {

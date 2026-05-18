@@ -29,4 +29,9 @@ class ReportRepository
         return Warning::create($data);
     }
 
+    public function get_user_warnings($userId)
+    {
+        return Warning::where('user_id', $userId)->latest()->get();
+    }
+
 }

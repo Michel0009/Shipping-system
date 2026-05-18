@@ -59,7 +59,7 @@ class Driver extends Model
     }
     public function posts()
     {
-        return $this->belongsToMany(Post::class)->withPivot('date', 'price');
+        return $this->belongsToMany(Post::class)->withPivot('date', 'price')->withTimestamps();
     }
     public function rewards()
     {

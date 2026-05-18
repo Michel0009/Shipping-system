@@ -289,7 +289,10 @@ class ShipmentService
                 []
             );
 
-            return "تم رفض الطلب";
+            return [
+                'message' => "تم رفض الطلب",
+                'shipment_data' => null
+            ];
         }
         $shipmentNumber = time() . rand(100, 999);
         $pin = random_int(100000, 999999);
@@ -318,8 +321,37 @@ class ShipmentService
             $data_body
         );
 
-        return "تم قبول الطلب وإنشاء الشحنة";
+        $shipment_data = [
+            'id' => $shipment->id,
+            'start_position_lat' => $shipment->start_position_lat,
+            'start_position_lng' => $shipment->start_position_lng,
+            'end_position_lat' => $shipment->end_position_lat,
+            'end_position_lng' => $shipment->end_position_lng,
+        ];
+        $shipment_data['path'] = $this->get_shipment_path($shipment);
+
+        return [
+            'message' => "تم قبول الطلب وإنشاء الشحنة",
+            'shipment_data' => $shipment_data
+        ];
     }
+
+    private function get_shipment_path($shipment){
+        
+        $startCoords = "{$shipment->start_position_lng},{$shipment->start_position_lat}";
+        $endCoords = "{$shipment->end_position_lng},{$shipment->end_position_lat}";
+        $fullRouteUrl = "http://router.project-osrm.org/route/v1/driving/{$startCoords};{$endCoords}?overview=full&geometries=geojson";
+        
+        $response = @file_get_contents($fullRouteUrl);
+        if ($response) {
+            $data = json_decode($response, true);
+            if (isset($data['routes'][0])) {
+                return $data['routes'][0]['geometry'];
+            }
+        }
+        return null;
+    }
+    
 
     public function confirm_pickup(array $data)
     {
@@ -590,6 +622,29 @@ class ShipmentService
                 'last_name' => $driverUser->last_name,
                 'phone_number' => $driverUser->phone_number,
                 'user_number' => $driverUser->user_number
+            ];
+        }
+        return $shipments;
+    }
+
+    public function get_active_shipments_for_driver()
+    {
+        $user = Auth::user();
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
+        $shipments = $this->shipmentRepository->get_active_shipments_for_driver($driver->id);
+        if ($shipments->isEmpty()){
+            return [
+                'result' => "لا يوجد شحنات نشطة",
+            ];
+        }
+        foreach ($shipments as $shipment) {
+            $shipment['path'] = $this->get_shipment_path((object)$shipment);
+            $client = $this->userRepository->find_user($shipment->user_id);
+            $shipment['client'] = [
+                'first_name' => $client->first_name,
+                'last_name' => $client->last_name,
+                'phone_number' => $client->phone_number,
+                'user_number' => $client->user_number
             ];
         }
         return $shipments;

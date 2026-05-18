@@ -16,11 +16,35 @@ class ReportController extends Controller
 
     public function report(ReportFormRequest $request)
     {
-        $report = $this->reportService->create_report($request->validated());
+        $this->reportService->create_report($request->validated());
 
         return response()->json([
             'message' => 'تم إرسال البلاغ بنجاح',
         ]);
 
+    }
+
+    public function get_reports()
+    {
+        $reports = $this->reportService->get_reports();
+        return response()->json($reports);
+    }
+
+    public function send_warning(ReportFormRequest $request)
+    {
+        $this->reportService->send_warning($request->validated());
+
+        return response()->json([
+            'message' => 'تم إرسال التنبيه للمستخدم بنجاح',
+        ]);
+    }
+
+    public function send_notification_for_all(ReportFormRequest $request)
+    {
+        $this->reportService->send_notification_for_all($request->validated());
+
+        return response()->json([
+            'message' => 'تم إرسال هذا الإشعار لجميع مستخدمين التطبيق بنجاح',
+        ]);
     }
 }

@@ -126,4 +126,14 @@ class UserRepository
             ->where('end_date', '<=', now())
             ->get();
     }
+
+    public function get_all_app_users()
+    {
+        return $this->user->whereIn('role_id', [3, 4])->get();
+    }
+    // public function freeze_accounts()
+    // {
+    //     $this->user->where('role_id', 4)->where('status', 0)->update(['status' => 1]);
+    //     $this->user->where('role_id', 4)->where('status', 1)->update(['status' => 2]);
+    // }
 }

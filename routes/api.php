@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ContractTermController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShipmentController;
@@ -44,6 +46,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/review', [ReviewController::class, 'create_review']);
         Route::get('/shipments/client', [ShipmentController::class, 'get_shipments_for_user']);
         Route::get('/activeShipments/client', [ShipmentController::class, 'get_active_shipments_for_user']);
+
+        Route::post('/post/create', [PostController::class, 'create_post']);
+        Route::put('/post/update', [PostController::class, 'update_prices']);
+        Route::delete('/post/{id}', [PostController::class, 'delete_post']);
+        Route::get('/posts/client', [PostController::class, 'get_my_posts']);
     });
 
     // Driver Routes
@@ -60,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/shipment/confirm-delivery', [ShipmentController::class, 'confirm_delivery']);
         Route::get('/shipments/driver', [ShipmentController::class, 'get_shipments_for_driver']);
         Route::get('/shipmentRequest/driver', [ShipmentController::class, 'get_requests_for_driver']);
+        Route::get('/activeShipments/driver', [ShipmentController::class, 'get_active_shipments_for_driver']);
 
         Route::get('/countContinuousSuccessfulShipments', [DriverController::class, 'count_continuous_successful_shipments']);
         Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
@@ -78,6 +86,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/subAdmin/update/{id}', [UserController::class, 'update_sub_admin']);
         Route::post('/blockUser', [UserController::class, 'block']);
         Route::get('/unblockUser/{id}', [UserController::class, 'unblock']);
+
+        Route::post('/contractTerm/create', [ContractTermController::class, 'create_contract_term']);
+        Route::get('/contractTerms', [ContractTermController::class, 'get_contract_terms']);
+        Route::delete('/contractTerm/{id}', [ContractTermController::class, 'delete_contract_term']);
     });
 
     // Employee-Admin Routes
@@ -93,6 +105,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/shipments', [ShipmentController::class, 'get_shipments']);
         Route::get('/shipments/driver/{driver_id}', [ShipmentController::class, 'get_shipments_by_driver_id']);
         Route::get('/shipments/insured', [ShipmentController::class, 'get_shipments_with_insurance']);
+
+        Route::get('/reports', [ReportController::class, 'get_reports']);
+        Route::post('/sendWarning', [ReportController::class, 'send_warning']);
+        Route::post('/sendNotificationForAll', [ReportController::class, 'send_notification_for_all']);
+        Route::get('/badges', [DriverController::class, 'get_badges']);
+        // Route::put('/badge', [DriverController::class, 'edit_badge']);
     });
 
     // Client-Driver Routes

@@ -63,21 +63,21 @@ class UserFormRequest extends FormRequest
             'save_device_token' => [
                 'token' => 'required|string'
             ],
-            'add_sub_admin'=>[
-                'first_name'   => ['required', 'string', 'max:255',$noHtml],
+            'add_sub_admin' => [
+                'first_name'   => ['required', 'string', 'max:255', $noHtml],
                 'last_name'    => ['required', 'string', 'max:255', $noHtml],
                 'email'        => ['required', 'email', 'unique:users,email', $noHtml],
                 'phone_number' => ['required', 'string', 'max:20', $noHtml],
             ],
-            'update_sub_admin'=>[
-                'first_name'   => ['sometimes', 'string', 'max:255',$noHtml],
+            'update_sub_admin' => [
+                'first_name'   => ['sometimes', 'string', 'max:255', $noHtml],
                 'last_name'    => ['sometimes', 'string', 'max:255', $noHtml],
                 'phone_number' => ['sometimes', 'string', 'max:20', $noHtml],
             ],
             'block' => [
-                'id' => ['required','integer','exists:users,id'],
-                'days_number' => ['sometimes','nullable','integer','min:1'],
-                'explaination' => ['required','string','max:255',$noHtml]
+                'id' => ['required', 'integer', 'exists:users,id'],
+                'days_number' => ['sometimes', 'nullable', 'integer', 'min:1'],
+                'explaination' => ['required', 'string', 'max:255', $noHtml]
             ],
             default => [],
         };
@@ -89,25 +89,25 @@ class UserFormRequest extends FormRequest
     {
         return match ($this->route()->getActionMethod()) {
             'create_driver' => [
-                'required' => '.حقل :attribute مطلوب',
-                'string'    => '.حقل :attribute يجب أن يكون نصاً',
-                'max.string' => '.حقل :attribute يجب ألا يتجاوز :max حرفاً',
-                'personal_picture.max' => '.حقل :attribute يجب ألا يتجاوز :max كيلوبايت',
-                'license_file.max'     => '.حقل :attribute يجب ألا يتجاوز :max كيلوبايت',
-                'unconvicted_file.max' => '.حقل :attribute يجب ألا يتجاوز :max كيلوبايت',
-                'car_papers.*.car_file.max' => '.حقل :attribute يجب ألا يتجاوز :max كيلوبايت',
-                'year_of_manufacture.max' => '.حقل :attribute يجب ألا يتجاوز عام :max',
-                'email'    => '.البريد الإلكتروني المدخل غير صحيح',
-                'unique'   => '.هذا :attribute مستخدم بالفعل',
-                'date'     => '.تاريخ :attribute غير صحيح',
-                'before'   => '.يجب أن يكون :attribute تاريخاً سابقاً لليوم',
-                'in'       => '.القيمة المختارة لـ :attribute غير صالحة',
-                'exists'   => '.القيمة المختارة لـ :attribute غير موجودة',
-                'file'     => '.يجب رفع ملف في حقل :attribute',
-                'mimes'    => '.:values يجب أن يكون الملف بصيغة',
-                'integer'  => '.يجب أن يكون :attribute رقماً',
-                'min'      => '.يجب أن يكون :attribute على الأقل :min',
-                'min.numeric' => '.يجب أن يكون :attribute :min عام أو أحدث'
+                'required' => 'حقل :attribute مطلوب.',
+                'string'    => 'حقل :attribute يجب أن يكون نصاً.',
+                'max.string' => 'حقل :attribute يجب ألا يتجاوز :max حرفاً.',
+                'personal_picture.max' => 'حقل :attribute يجب ألا يتجاوز :max كيلوبايت.',
+                'license_file.max'     => 'حقل :attribute يجب ألا يتجاوز :max كيلوبايت.',
+                'unconvicted_file.max' => 'حقل :attribute يجب ألا يتجاوز :max كيلوبايت.',
+                'car_papers.*.car_file.max' => 'حقل :attribute يجب ألا يتجاوز :max كيلوبايت.',
+                'year_of_manufacture.max' => 'حقل :attribute يجب ألا يتجاوز عام :max',
+                'email'    => 'البريد الإلكتروني المدخل غير صحيح.',
+                'unique'   => 'هذا :attribute مستخدم بالفعل.',
+                'date'     => 'تاريخ :attribute غير صحيح.',
+                'before'   => 'يجب أن يكون :attribute تاريخاً سابقاً لليوم.',
+                'in'       => 'القيمة المختارة لـ :attribute غير صالحة.',
+                'exists'   => 'القيمة المختارة لـ :attribute غير موجودة.',
+                'file'     => 'يجب رفع ملف في حقل :attribute.',
+                'mimes'    => ':values يجب أن يكون الملف بصيغة.',
+                'integer'  => 'يجب أن يكون :attribute رقماً.',
+                'min'      => 'يجب أن يكون :attribute على الأقل :min',
+                'min.numeric' => 'يجب أن يكون :attribute :min عام أو أحدث',
             ],
             'edit_profile' => [
                 'required' => '.حقل :attribute مطلوب',
@@ -131,7 +131,7 @@ class UserFormRequest extends FormRequest
     public function attributes(): array
     {
         return match ($this->route()->getActionMethod()) {
-            'create_driver' => [
+            'create_driver' => array_merge([
                 'first_name'           => 'الاسم الأول',
                 'last_name'            => 'الكنية',
                 'email'                => 'البريد الإلكتروني',
@@ -160,7 +160,7 @@ class UserFormRequest extends FormRequest
                 'fuel_type'            => 'نوع الوقود',
                 'car_status'           => 'حالة السيارة',
                 'car_papers'           => 'أوراق السيارة',
-            ],
+            ], $this->getCarPapersAttributes()),
             'edit_profile' => [
                 'first_name' => 'الاسم الأول',
                 'last_name' => 'الكنية',
@@ -191,5 +191,21 @@ class UserFormRequest extends FormRequest
             'last_name'    => ['sometimes', 'string', 'max:255', $noHtml],
             'phone_number' => ['sometimes', 'string', 'max:20', $noHtml],
         ];
+    }
+    private function getCarPapersAttributes(): array
+    {
+        $carPapersAttributes = [];
+        
+        $allData = $this->all();
+
+        if (isset($allData['car_papers']) && is_array($allData['car_papers'])) {
+            foreach ($allData['car_papers'] as $index => $paper) {
+                $rowNumber = $index + 1;
+                $carPapersAttributes["car_papers.{$index}.car_file"] = "ملف وثيقة السيارة (الوثيقة {$rowNumber})";
+                $carPapersAttributes["car_papers.{$index}.type"]     = "نوع وثيقة السيارة (الوثيقة {$rowNumber})";
+            }
+        }
+
+        return $carPapersAttributes;
     }
 }

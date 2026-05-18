@@ -123,9 +123,16 @@ class DriverController extends Controller
             return response()->json(['message' => 'حدث خطأً ما'], 400);
         }
     }
+
     public function download_documnet(DriverFormRequest $request)
     {
         $validated = $request->validated();
         return $this->driverService->download_document($validated['type'], $validated['id']);
+    }
+
+    public function get_badges()
+    {
+        $badges = $this->driverService->get_badges();
+        return response()->json($badges);
     }
 }

@@ -233,6 +233,7 @@ class DriverRepository
     {
         return Reward::create($data);
     }
+
     public function find_document($type, $id)
     {
         if ($type === 'license') {
@@ -243,5 +244,9 @@ class DriverRepository
             return Car_paper::where('id', $id)->value('car_file');
         }
         return null;
+}
+    public function get_badges()
+    {
+        return Badge::get();
     }
 }

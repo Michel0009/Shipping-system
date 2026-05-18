@@ -91,9 +91,7 @@ class ShipmentController extends Controller
     {
         $result = $this->shipmentService->respond_to_request($request->validated());
 
-        return response()->json([
-            'message' => $result
-        ]);
+        return response()->json($result);
     } 
 
     public function confirm_pickup(ShipmentFormRequest $request)
@@ -175,6 +173,13 @@ class ShipmentController extends Controller
     {
         return response()->json(
             $this->shipmentService->get_active_shipments_for_user()
+        );
+    }
+
+    public function get_active_shipments_for_driver()
+    {
+        return response()->json(
+            $this->shipmentService->get_active_shipments_for_driver()
         );
     }
 

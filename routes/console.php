@@ -52,3 +52,9 @@ Schedule::call(function () {
     }
 
 })->everyThirtyMinutes();
+
+// Schedule::call(function () {
+//     $shipmentRepository = app(\App\Repositories\ShipmentRepository::class);
+//     $driverRepository = app(\App\Repositories\DriverRepository::class);
+//     app(\App\Repositories\UserRepository::class)->freeze_accounts();
+// })->monthlyOn(1, '03:00');

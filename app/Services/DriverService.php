@@ -553,5 +553,9 @@ class DriverService
             $document,
             basename($document)
         );
+}
+    public function get_badges()
+    {
+        return $this->driverRepository->get_badges();
     }
 }

@@ -140,8 +140,8 @@ class DriverFormRequest extends FormRequest
                 'integer'  => '.يجب أن يكون :attribute رقماً',
                 'min'      => '.يجب أن يكون :attribute على الأقل :min',
                 'min.numeric' => '.يجب أن يكون :attribute :min عام أو أحدث',
-                'car_papers.*.type.required_with' => 'يجب تحديد نوع الورقة لكل ملف مرفوع في أوراق السيارة.',
-                'car_papers.*.car_file.required_with' => 'يجب إرفاق الملف لكل نوع ورقة يتم اختياره في أوراق السيارة.',
+                'car_papers.*.type.required_with' => '.حقل :attribute مطلوب عند رفع الملف المصاحب له',
+                'car_papers.*.car_file.required_with' => '.يجب رفع :attribute عند تحديد نوع الوثيقة',
             ],
             'tax_driver' => [
                 'driver_id.required' => 'معرف السائق مطلوب',
@@ -156,36 +156,39 @@ class DriverFormRequest extends FormRequest
     public function attributes(): array
     {
         return match ($this->route()->getActionMethod()) {
-            'update_driver' => [
-                'id'                   => 'معرف السائق',
-                'first_name'           => 'الاسم الأول',
-                'last_name'            => 'الكنية',
-                'phone_number'         => 'رقم الهاتف',
-                'father_name'          => 'اسم الأب',
-                'mother_name'          => 'اسم الأم',
-                'mother_last_name'     => 'كنية الأم',
-                'birth_date'           => 'تاريخ الميلاد',
-                'birth_place'          => 'مكان الميلاد',
-                'national_number'      => 'الرقم الوطني',
-                'governorate'          => 'المحافظة',
-                'city'                 => 'المدينة',
-                'neighborhood'         => 'الحي',
-                'gender'               => 'الجنس',
-                'nationality'          => 'الجنسية',
-                'personal_picture'     => 'الصورة الشخصية',
-                'license_file'         => 'ملف الرخصة',
-                'unconvicted_file'     => 'ورقة غير محكوم',
-                'governorate_ids'      => 'المحافظات',
-                'vehicle_type_id'      => 'نوع المركبة',
-                'license_plate_number' => 'رقم اللوحة',
-                'manufacturer'         => 'الشركة المصنعة',
-                'model'                => 'الموديل',
-                'year_of_manufacture'  => 'سنة الصنع',
-                'color'                => 'اللون',
-                'fuel_type'            => 'نوع الوقود',
-                'car_status'           => 'حالة السيارة',
-                'car_papers'           => 'أوراق السيارة',
-            ],
+            'update_driver' => array_merge(
+                [
+                    'id'                   => 'معرف السائق',
+                    'first_name'           => 'الاسم الأول',
+                    'last_name'            => 'الكنية',
+                    'phone_number'         => 'رقم الهاتف',
+                    'father_name'          => 'اسم الأب',
+                    'mother_name'          => 'اسم الأم',
+                    'mother_last_name'     => 'كنية الأم',
+                    'birth_date'           => 'تاريخ الميلاد',
+                    'birth_place'          => 'مكان الميلاد',
+                    'national_number'      => 'الرقم الوطني',
+                    'governorate'          => 'المحافظة',
+                    'city'                 => 'المدينة',
+                    'neighborhood'         => 'الحي',
+                    'gender'               => 'الجنس',
+                    'nationality'          => 'الجنسية',
+                    'personal_picture'     => 'الصورة الشخصية',
+                    'license_file'         => 'ملف الرخصة',
+                    'unconvicted_file'     => 'ورقة غير محكوم',
+                    'governorate_ids'      => 'المحافظات',
+                    'vehicle_type_id'      => 'نوع المركبة',
+                    'license_plate_number' => 'رقم اللوحة',
+                    'manufacturer'         => 'الشركة المصنعة',
+                    'model'                => 'الموديل',
+                    'year_of_manufacture'  => 'سنة الصنع',
+                    'color'                => 'اللون',
+                    'fuel_type'            => 'نوع الوقود',
+                    'car_status'           => 'حالة السيارة',
+                    'car_papers'           => 'أوراق السيارة',
+                ],
+                $this->getCarPapersAttributes()
+            ),
             'set_driver_location' => [
                 'lat.required' => 'إحداثيات خط العرض مطلوبة',
                 'lat.numeric' => 'خط العرض يجب أن يكون رقماً',
@@ -196,5 +199,21 @@ class DriverFormRequest extends FormRequest
 
             default => [],
         };
+    }
+    private function getCarPapersAttributes(): array
+    {
+        $carPapersAttributes = [];
+
+        $allData = $this->all();
+
+        if (isset($allData['car_papers']) && is_array($allData['car_papers'])) {
+            foreach ($allData['car_papers'] as $index => $paper) {
+                $rowNumber = $index + 1;
+                $carPapersAttributes["car_papers.{$index}.car_file"] = "ملف وثيقة السيارة (الوثيقة {$rowNumber})";
+                $carPapersAttributes["car_papers.{$index}.type"]     = "نوع وثيقة السيارة (الوثيقة {$rowNumber})";
+            }
+        }
+
+        return $carPapersAttributes;
     }
 }

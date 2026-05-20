@@ -42,8 +42,17 @@ class PostFormRequest extends FormRequest
             ],
             'update_prices' => [
                 'post_id' => 'required|exists:posts,id',
-                'min_price' => 'required|numeric|min:0',
+                'min_price' => 'required|numeric|gt:0',
                 'max_price' => 'required|numeric|gt:min_price',
+            ],
+            'apply_post' => [
+                'post_id' => 'required|exists:posts,id',
+                'price' => 'required|numeric|gt:0',
+                'date' => 'required|date|after_or_equal:today',
+            ],
+            'choose_driver_for_post' => [
+                'post_id'   => 'required|exists:posts,id',
+                'driver_id' => 'required|exists:drivers,id',
             ],
             default => [],
         };
@@ -53,6 +62,7 @@ class PostFormRequest extends FormRequest
     {
         return [
             'last_date.after_or_equal' => 'تاريخ انتهاء الإعلان يجب أن يكون تاريخاً مستقبلياً.',
+            'date.after_or_equal' => 'تاريخ التسليم يجب أن يكون تاريخاً مستقبلياً.',
             'max_price.gt' => 'يجب أن يكون الحد الأعلى للسعر أكبر من الحد الأدنى.',
             'numeric' => 'حقل :attribute يجب أن يكون رقماً.',
             'required' => 'حقل :attribute مطلوب.',
@@ -82,6 +92,9 @@ class PostFormRequest extends FormRequest
             'last_date' => 'تاريخ النهاية',
             'min_price' => 'الحد الأدنى للسعر',
             'post_id' => 'معرف الإعلان',
+            'price' => 'السعر',
+            'date' => 'التاريخ',
+            'driver_id' => 'معرف السائق',
         ];
     }
 }

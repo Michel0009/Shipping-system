@@ -237,4 +237,11 @@ class DriverRepository
     {
         return Badge::get();
     }
+
+    public function get_driver_with_vehicle_and_governorates($userId)
+    {
+        return $this->driver->where('user_id', $userId)
+            ->with(['car.vehicle_type', 'governorates'])
+            ->first();
+    }
 }

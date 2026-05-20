@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/driverImage/{id}', [DriverController::class, 'get_driver_image']);
     Route::get('/shipment/id/{id}', [ShipmentController::class, 'get_shipment_by_id']);
     Route::get('/shipment/number/{number}', [ShipmentController::class, 'get_shipment_by_number']);
+    Route::get('/post/{id}', [PostController::class, 'get_post_details']);
 
     // Client Routes
     Route::middleware('role:client')->group(function () {
@@ -51,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/post/update', [PostController::class, 'update_prices']);
         Route::delete('/post/{id}', [PostController::class, 'delete_post']);
         Route::get('/posts/client', [PostController::class, 'get_my_posts']);
+        Route::post('/post/ChooseDriver', [PostController::class, 'choose_driver_for_post']);
     });
 
     // Driver Routes
@@ -61,7 +63,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/reviews', [ReviewController::class, 'get_driver_reviews']);
 
-
         Route::post('/shipment/respond', [ShipmentController::class, 'respond_to_request']);
         Route::post('/shipment/confirm-pickup', [ShipmentController::class, 'confirm_pickup']);
         Route::post('/shipment/confirm-delivery', [ShipmentController::class, 'confirm_delivery']);
@@ -71,6 +72,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/countContinuousSuccessfulShipments', [DriverController::class, 'count_continuous_successful_shipments']);
         Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
+
+        // Posts
+        Route::post('/post/apply', [PostController::class, 'apply_post']);
+        Route::delete('/post/cancel/{id}', [PostController::class, 'cancel_apply']);
+        Route::get('/posts/driver/suitable', [PostController::class, 'suitable_posts_for_driver']);
     });
 
     // Admin Routes

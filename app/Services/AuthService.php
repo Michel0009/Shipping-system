@@ -172,6 +172,7 @@ class AuthService
 
     Cache::forget("reset_token_".$user->id);
     $user->tokens()->delete();
+    $this->userRepository->revoke_user_tokens($user->id);
     return true;
   }
 

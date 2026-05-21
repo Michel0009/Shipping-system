@@ -268,4 +268,21 @@ class ShipmentRepository
         ];
 
     }
+
+    public function get_unpaid_counts($driver_id)
+    {
+        $unpaid_count = $this->shipment->where('driver_id', $driver_id)->where('paid', false)->count();
+        $rewards = Reward::where('driver_id', $driver_id)->where('received', false)->count();
+
+        return [
+            'unpaid_count' => $unpaid_count,
+            'rewards' => $rewards,
+        ];
+    }
+
+    public function pay_shipments($driver_id)
+    {
+        $this->shipment->where('driver_id', $driver_id)->update(['paid' => true]);
+        Reward::where('driver_id', $driver_id)->update(['received' => true]);
+    }
 }

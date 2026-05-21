@@ -81,7 +81,7 @@ class DriverFormRequest extends FormRequest
             ],
             'tax_driver' => [
                 'driver_id' => 'required|integer|exists:drivers,id',
-                'value' => 'required|integer',
+                'value' => 'required|integer|gt:0',
             ],
             default => [],
         };
@@ -139,6 +139,7 @@ class DriverFormRequest extends FormRequest
                 'driver_id.integer' => 'يجب أن يكون المعرف رقماً صحيحاً',
                 'value.required' => 'قيمة الضريبة مطلوبة',
                 'value.integer' => 'يجب أن تكون قيمة الضريبة رقماً صحيحاً',
+                'value.gt' => 'قيمة الضريبة يجب أن تكون أكبر من الصفر.',
             ],
             default => [],
         };

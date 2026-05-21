@@ -57,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Driver Routes
     Route::middleware('role:driver')->group(function () {
-        Route::get('/changeDriverAvailability', [DriverController::class, 'change_driver_availability']);
+        Route::get('/changeDriverAvailability', [DriverController::class, 'change_driver_availability'])->middleware('user.status');
         Route::post('/governorate/attach', [DriverController::class, 'attach_governorate']);
         Route::post('/governorate/detatch', [DriverController::class, 'detatch_governorate']);
 
@@ -74,7 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/driver/setLocation', [DriverController::class, 'set_driver_location']);
 
         // Posts
-        Route::post('/post/apply', [PostController::class, 'apply_post']);
+        Route::post('/post/apply', [PostController::class, 'apply_post'])->middleware('user.status');
         Route::delete('/post/cancel/{id}', [PostController::class, 'cancel_apply']);
         Route::get('/posts/driver/suitable', [PostController::class, 'suitable_posts_for_driver']);
     });

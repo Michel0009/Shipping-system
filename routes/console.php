@@ -53,8 +53,30 @@ Schedule::call(function () {
 
 })->everyThirtyMinutes();
 
-// Schedule::call(function () {
-//     $shipmentRepository = app(\App\Repositories\ShipmentRepository::class);
-//     $driverRepository = app(\App\Repositories\DriverRepository::class);
-//     app(\App\Repositories\UserRepository::class)->freeze_accounts();
-// })->monthlyOn(1, '03:00');
+
+Schedule::call(function () {
+    $shipmentRepository = app(\App\Repositories\ShipmentRepository::class);
+    $driverRepository = app(\App\Repositories\DriverRepository::class);
+    $userRepository = app(\App\Repositories\UserRepository::class);
+
+    $users = $userRepository->get_drivers_user();
+    foreach ($users as $user) {
+
+        $driver = $driverRepository->find_by_user_ID($user['id']);
+        
+        if ($user->status == 0) {
+            $statisics = $shipmentRepository->get_unpaid_counts($driver->id);
+            if (($statisics['unpaid_count'] > 0) || ($statisics['rewards'] > 0) ) {
+                $user->status = 1;
+                $userRepository->save($user);
+            }
+        }
+        else if ($user->status == 1) {
+            $user->status = 2;
+            $userRepository->save($user);
+            $driver->availability = false;
+            $driverRepository->save($driver);
+        }
+    }
+    
+})->monthlyOn(1, '03:00');

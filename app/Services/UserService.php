@@ -517,7 +517,10 @@ class UserService
             ];
         }
         $user->status = 0;
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
         $this->userRepository->save($user);
+        $shipmentRepository = app(\App\Repositories\ShipmentRepository::class);
+        $shipmentRepository->pay_shipments($driver->id);
         return [
             'message' => 'تم تفعيل حساب المستخدم بنجاح',
             'code' => 200

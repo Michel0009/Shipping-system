@@ -131,9 +131,9 @@ class UserRepository
     {
         return $this->user->whereIn('role_id', [3, 4])->get();
     }
-    // public function freeze_accounts()
-    // {
-    //     $this->user->where('role_id', 4)->where('status', 0)->update(['status' => 1]);
-    //     $this->user->where('role_id', 4)->where('status', 1)->update(['status' => 2]);
-    // }
+
+    public function get_drivers_user()
+    {
+        return $this->user->where('role_id', 4)->get();
+    }
 }

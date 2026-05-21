@@ -172,7 +172,7 @@ class ShipmentRepository
     public function get_active_shipments_for_driver($driver_id)
     {
         $shipments = $this->shipment->where('driver_id', $driver_id)
-            ->select('id', 'user_id', 'driver_id', 'shipment_number', 'price', 'status', 
+            ->select('id', 'user_id', 'driver_id', 'shipment_number', 'price', 'status',
                 'start_position_lat', 'start_position_lng', 'end_position_lat', 'end_position_lng')
             ->whereIn('status', ['قيد التوصيل', 'جارية'])->latest()->get();
 
@@ -284,4 +284,21 @@ class ShipmentRepository
             ->first();
     }
 
+
+    public function get_unpaid_counts($driver_id)
+    {
+        $unpaid_count = $this->shipment->where('driver_id', $driver_id)->where('paid', false)->count();
+        $rewards = Reward::where('driver_id', $driver_id)->where('received', false)->count();
+
+        return [
+            'unpaid_count' => $unpaid_count,
+            'rewards' => $rewards,
+        ];
+    }
+
+    public function pay_shipments($driver_id)
+    {
+        $this->shipment->where('driver_id', $driver_id)->update(['paid' => true]);
+        Reward::where('driver_id', $driver_id)->update(['received' => true]);
+    }
 }

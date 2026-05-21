@@ -507,10 +507,11 @@ class UserService
             ];
         }
         if ($user->role_id == 3) {
-            if ($this->shipmentRepository->get_latest_active_shipment_by_user_id($user->id)) {
+            $latest_active_shipment = $this->shipmentRepository->get_latest_active_shipment_by_user_id($user->id);
+            if ($latest_active_shipment) {
                 return [
                     'message' => 'لا يمكن حظر العميل لوجود شحنات نشطة',
-                    'deadline' => $this->shipmentRepository->get_latest_active_shipment_by_user_id($user->id)->delivery_deadline,
+                    'deadline' => $latest_active_shipment->delivery_deadline,
                     'code' => 422
                 ];
             }
@@ -521,10 +522,11 @@ class UserService
                 ];
             }
         } elseif ($user->role_id == 4) {
-            if ($this->shipmentRepository->get_latest_active_shipment_by_driver_id($user->driver->id)) {
+            $latest_active_shipment = $this->shipmentRepository->get_latest_active_shipment_by_driver_id($user->driver->id);
+            if ($latest_active_shipment) {
                 return [
                     'message' => 'لا يمكن حظر السائق لوجود شحنات نشطة',
-                    'deadline' => $this->shipmentRepository->get_latest_active_shipment_by_driver_id($user->driver->id)->delivery_deadline,
+                    'deadline' => $latest_active_shipment->delivery_deadline,
                     'code' => 422
                 ];
             }
@@ -619,7 +621,10 @@ class UserService
             ];
         }
         $user->status = 0;
+        $driver = $this->driverRepository->find_by_user_ID($user->id);
         $this->userRepository->save($user);
+        $shipmentRepository = app(\App\Repositories\ShipmentRepository::class);
+        $shipmentRepository->pay_shipments($driver->id);
         return [
             'message' => 'تم تفعيل حساب المستخدم بنجاح',
             'code' => 200

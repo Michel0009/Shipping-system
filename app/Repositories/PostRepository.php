@@ -3,6 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\Post;
+use App\Models\Shipment;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PostRepository
 {
@@ -64,19 +67,19 @@ class PostRepository
         });
     }
     
-    public function attachDriver(Post $post, $driverId, array $pivotData)
+    public function attach_driver(Post $post, $driverId, array $pivotData)
     {
         return $post->drivers()->syncWithoutDetaching([
             $driverId => $pivotData
         ]);
     }
 
-    public function detachDriver(Post $post, $driverId)
+    public function detach_driver(Post $post, $driverId)
     {
         return $post->drivers()->detach($driverId);
     }
 
-    public function getPostWithApplicants($id)
+    public function get_post_details($id)
     {
         return $this->post->where('id', $id)
             ->with([
@@ -88,17 +91,79 @@ class PostRepository
             ])->firstOrFail();
     }
 
-    public function getAvailablePostsForVehicle($type)
+    public function get_available_posts_for_vehicle($type, array $driverGovIds)
     {
         $posts = $this->post->where('finished', false)
             ->where('weight', '>=', $type->min_weight)->where('weight', '<=', $type->max_weight)
             ->where('length', '>=', $type->min_length)->where('length', '<=', $type->max_length)
             ->where('width', '>=', $type->min_width)->where('width', '<=', $type->max_width)
             ->where('height', '>=', $type->min_height)->where('height', '<=', $type->max_height)
+            ->whereHas('governorates', function ($query) use ($driverGovIds) {
+                $query->whereIn('governorate_id', $driverGovIds)
+                      ->where('governorate_post.start_end', 'start');
+            })
+            ->whereHas('governorates', function ($query) use ($driverGovIds) {
+                $query->whereIn('governorate_id', $driverGovIds)
+                      ->where('governorate_post.start_end', 'end');
+            })
             ->with('governorates')
             ->latest()
             ->get();
         return $this->transform_posts($posts);
+    }
+
+    public function find_post_with_drivers(int $id)
+    {
+        return $this->post->with('drivers')->with('governorates')->find($id);
+    }
+
+    public function convert_post_to_shipment(Post $post, int $driverId, $price, $shipmentNumber, $pin, $qrPin, $deadline)
+    {
+        return DB::transaction(function () use ($post, $driverId, $price, $shipmentNumber, $pin, $qrPin, $deadline) {
+            
+            $shipment = Shipment::create([
+                'user_id'            => $post->user_id,
+                'driver_id'          => $driverId,
+                'shipment_number'    => $shipmentNumber,
+                'weight'             => $post->weight,
+                'height'             => $post->height,
+                'width'              => $post->width,
+                'length'             => $post->length,
+                'object'             => $post->object,
+                'insurance'          => $post->insurance,
+                'start_position_lat' => $post->start_position_lat,
+                'start_position_lng' => $post->start_position_lng,
+                'end_position_lat'   => $post->end_position_lat,
+                'end_position_lng'   => $post->end_position_lng,
+                'price'              => $price,
+                'pin'                => $pin,
+                'qr_pin'             => $qrPin,
+                'status'             => 'جارية',
+                'success'            => false,
+                'delivery_deadline'  => $deadline,
+            ]);
+
+            $start = $post->governorates
+                ->where('pivot.start_end', 'start')
+                ->first();
+
+            $end = $post->governorates
+                ->where('pivot.start_end', 'end')
+                ->first();
+
+            $shipment->governorates()->attach([
+                $start->id => ['start_end' => 'start']
+            ]);
+            $shipment->governorates()->attach([
+                $end->id => ['start_end' => 'end']
+            ]);
+
+            $post->update([
+                'finished' => true
+            ]);
+
+            return $shipment;
+        });
     }
     
 }

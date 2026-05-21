@@ -49,6 +49,13 @@ class NotificationService
         }
 
         $this->notificationRepository->update(['status' => true], $user->id);
+
+        foreach ($notificatios as $notification) {
+            if($notification->title == 'إعلانات غير فورية'){
+                $notification['post_id'] = $notification['shipment_id'];
+                $notification['shipment_id'] = 0;
+            }
+        }
         
         return ['notifications' => $notificatios]; 
     }

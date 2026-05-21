@@ -6,8 +6,11 @@ use App\Repositories\CarRepository;
 use App\Repositories\DriverRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\UserRepository;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PostService
 {
@@ -130,104 +133,177 @@ class PostService
 
     public function apply_to_post(array $data)
     {
-        $driver = $this->driverRepository->findByUserId(auth()->id());
-        
-        if (!$driver) {
-            return ['success' => false, 'message' => 'عذراً، هذا الحساب ليس حساب سائق.', 'code' => 403];
-        }
-
+        $driver = $this->driverRepository->find_by_user_ID(auth()->id());
         $post = $this->postRepository->find($data['post_id']);
 
         if ($post->finished) {
-            return ['success' => false, 'message' => 'عذراً، هذا الإعلان مغلق ومكتمل ولا يمكن التقديم عليه.', 'code' => 400];
+            return ['message' => 'عذراً، هذا الإعلان مغلق ومكتمل ولا يمكن التقديم عليه.', 'code' => 422];
         }
 
         if ($data['price'] < $post->min_price || $data['price'] > $post->max_price) {
-            return ['success' => false, 'message' => "يجب أن يكون السعر ضمن النطاق المقترح بين {$post->min_price} و {$post->max_price}.", 'code' => 422];
+            return ['message' => "يجب أن يكون السعر ضمن النطاق المقترح بين {$post->min_price} و {$post->max_price}.", 'code' => 422];
         }
 
-        if ($data['date'] > $post->last_date) {
-            return ['success' => false, 'message' => 'تاريخ التوصيل لا يمكن أن يتجاوز تاريخ انتهاء الإعلان.', 'code' => 422];
+        if (strtotime($data['date']) > strtotime($post->last_date)) {
+            return ['message' => 'تاريخ التوصيل لا يمكن أن يتجاوز تاريخ انتهاء الإعلان.', 'code' => 422];
         }
 
-        $this->postRepository->attachDriver($post, $driver->id, [
+        $this->postRepository->attach_driver($post, $driver->id, [
             'price' => $data['price'],
             'date' => $data['date']
         ]);
+        $data_body = [
+            'post_id' => $post->id,
+        ];
+        app(\App\Services\NotificationService::class)->send_notification(
+            $post->user_id,
+            "تم إرسال طلب نقل شحنة من قبل أحد السائقين لإيصال شحنتك التي قمت بنشرها سابقا.",
+            $post->id,
+            'إعلانات غير فورية',
+            $data_body
+        );
 
-        return ['success' => true, 'message' => 'تم تقديم عرضك على هذه الشحنة بنجاح.', 'code' => 200];
+        return ['message' => 'تم تقديم عرضك على هذه الشحنة بنجاح.', 'code' => 200];
     }
 
     public function cancel_application($postId)
     {
-        $driver = $this->driverRepository->findByUserId(auth()->id());
-        
-        if (!$driver) {
-            return ['success' => false, 'message' => 'غير مصرح للعملاء بإجراء هذه العملية.', 'code' => 403];
-        }
-
+        $driver = $this->driverRepository->find_by_user_ID(auth()->id());
         $post = $this->postRepository->find($postId);
 
         if ($post->finished) {
-            return ['success' => false, 'message' => 'لا يمكنك إلغاء العرض، الإعلان منتهي ومغلق بالفعل.', 'code' => 400];
+            return ['message' => 'لا يمكنك إلغاء العرض، الإعلان منتهي ومغلق بالفعل.', 'code' => 422];
         }
 
-        $this->postRepository->detachDriver($post, $driver->id);
+        $this->postRepository->detach_driver($post, $driver->id);
 
-        return ['success' => true, 'message' => 'تم سحب وإلغاء عرضك بنجاح.', 'code' => 200];
+        return ['message' => 'تم سحب وإلغاء عرضك بنجاح.', 'code' => 200];
     }
 
     public function get_post_details($postId)
     {
         $user = auth()->user();
 
-        if ($user->role_id == 3) {
-            $post = $this->postRepository->getPostWithApplicants($postId);
-            
-            if ($post->user_id == $user->id) {
-                return ['success' => true, 'data' => $this->transform_post_applicants($post), 'code' => 200];
-            }
-        }
+        $post = $this->postRepository->get_post_details($postId);
+        $post = $this->transform_single_post($post);
 
-        $post = $this->postRepository->find($postId);
-        return ['success' => true, 'data' => $post, 'code' => 200];
+        if ($user->role_id == 3 && $post->user_id == $user->id) {
+
+            $formattedDrivers = $post->drivers->map(function ($driver) {
+                $vehicle_type = $driver->car->vehicle_type;
+                $rating = round($driver->reviews->avg('rate'), 2);
+
+                return [
+                    'id' => $driver->id,
+                    'first_name' => $driver->user->first_name,
+                    'last_name' => $driver->user->last_name,
+                    'rating' => $rating,
+                    'vehicle' => $vehicle_type->type,
+                    'date' => $driver->pivot->date,
+                    'price' => $driver->pivot->price,
+                    'badge' => $driver->badge->name,
+                    'badge_text' => $driver->badge->text,
+                ];
+            });
+            $postData = $post->toArray();
+            $postData['drivers'] = $formattedDrivers;
+
+            return $postData;
+        }
+        return $post->makeHidden(['drivers']);
+    }
+
+    private function transform_single_post($post)
+    {
+        $start = $post->governorates
+            ->where('pivot.start_end', 'start')
+            ->first();
+        $post['start_governorate'] = $start?->name;
+
+        $end = $post->governorates
+            ->where('pivot.start_end', 'end')
+            ->first();
+        $post['end_governorate'] = $end?->name;
+
+        return $post->makeHidden(['governorates']);
     }
 
     public function get_suitable_posts_for_driver()
     {
-        $driver = $this->driverRepository->getDriverWithVehicleType(auth()->id());
+        $driver = $this->driverRepository->get_driver_with_vehicle_and_governorates(auth()->id());
+        $driverGovIds = $driver->governorates->pluck('id')->toArray();
 
-        if (!$driver || !$driver->car || !$driver->car->vehicle_type) {
-            return ['success' => false, 'message' => 'يرجى إكمال بيانات مركبتك ونوعها أولاً لتتمكن من رؤية الإعلانات المناسبة.', 'code' => 400];
+        $posts = $this->postRepository->get_available_posts_for_vehicle($driver->car->vehicle_type, $driverGovIds);
+
+        return $posts;
+    }
+
+    public function choose_driver_for_post(array $data)
+    {
+        $userId = Auth::id();
+
+        $postId = $data['post_id'];
+        $driverId = $data['driver_id'];
+        $post = $this->postRepository->find_post_with_drivers($postId);
+
+        if ($post->user_id !== $userId || $post->finished) {
+            abort(422, 'الإعلان منتهي ومغلق بالفعل');
         }
 
-        $posts = $this->postRepository->getAvailablePostsForVehicle($driver->car->vehicle_type);
+        if (!$post->drivers->contains($driverId)) {
+            abort(404, 'هذا السائق لم يتقدم بعرض على هذا المنشور');
+        }
 
-        return ['success' => true, 'data' => $posts, 'code' => 200];
+        $driver = $post->drivers->find($driverId);
+        
+        $proposedDate = $driver->pivot->date;
+        $deadline = Carbon::parse($proposedDate)->addDay()->endOfDay();
+
+        $shipmentNumber = time() . rand(100, 999);
+        $pin = random_int(100000, 999999);
+        $qrPin = Str::uuid()->toString();
+
+        $shipment = $this->postRepository->convert_post_to_shipment(
+            $post, 
+            $driver->id, 
+            $driver->pivot->price, 
+            $shipmentNumber, 
+            $pin, 
+            $qrPin, 
+            $deadline
+        );
+        $this->send_notifications($post, $driver->id);
+
+        return $shipment;
     }
 
-    private function transform_post_applicants($post)
+    protected function send_notifications($post, int $acceptedDriverId)
     {
-        $formattedDrivers = $post->drivers->map(function ($driver) {
-            $type = $driver->car?->vehicle_type;
-            $rating = $driver->reviews->avg('rating') ?? 0;
+        $notificationService = app(\App\Services\NotificationService::class);
+        $data_body = [
+            'post_id' => $post->id,
+        ];
 
-            return [
-                'id' => $driver->id,
-                'first_name' => $driver->user->first_name,
-                'last_name' => $driver->user->last_name,
-                'rating' => round($rating, 1),
-                'vehicle' => $type?->type,
-                'date' => $driver->pivot->date,
-                'price' => round($driver->pivot->price),
-                'badge' => $driver->badge->name,
-                'badge_text' => $driver->badge->text,
-            ];
-        });
+        foreach ($post->drivers as $driver) {
 
-        $postData = $post->toArray();
-        $postData['drivers'] = $formattedDrivers;
-
-        return $postData;
+            if ($driver->id == $acceptedDriverId) {
+                $notificationService->send_notification(
+                    $driver->user_id,
+                    "تم قبول عرضك لنقل الشحنة للعميل الذي أرسلته مسبقا.",
+                    $post->id,
+                    'إعلانات غير فورية',
+                    $data_body
+                );
+            } else {
+                $notificationService->send_notification(
+                    $driver->user_id,
+                    "تم رفض عرضك لنقل الشحنة للعميل الذي أرسلته مسبقا.",
+                    $post->id,
+                    'إعلانات غير فورية',
+                    $data_body
+                );
+            }
+        }
     }
+
 }

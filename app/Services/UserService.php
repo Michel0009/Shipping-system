@@ -287,6 +287,7 @@ class UserService
         $amount_to_pay = $statisics['unpaid_amount'] * 0.15;
         $my_earnings = $statisics['unpaid_amount'] - $amount_to_pay;
         $statisics['amount_to_pay'] = $amount_to_pay;
+        $statisics['total_amount_to_pay'] = $statisics['amount_to_pay'] - $statisics['unreceived_bonuses_sum'] + $statisics['unreceived_taxes_sum'];
         $statisics['my_earnings'] = $my_earnings;
 
         return [
@@ -584,7 +585,6 @@ class UserService
             'message' => 'تم فك حظر المستخدم بنجاح',
             'code' => 200
         ];
-
     }
     public function process_expired_bans()
     {
@@ -612,8 +612,7 @@ class UserService
                 'message' => 'المستخدم محظور',
                 'code' => 422
             ];
-        }
-        else if ($user->status == 0) {
+        } else if ($user->status == 0) {
             return [
                 'message' => 'حساب المستخدم مفعل مسبقا',
                 'code' => 422
@@ -625,5 +624,22 @@ class UserService
             'message' => 'تم تفعيل حساب المستخدم بنجاح',
             'code' => 200
         ];
+    }
+    public function get_users()
+    {
+        $page = request('page', 1);
+        $cacheKey = "users_page_" . $page;
+        return Cache::tags(["user_list"])->remember($cacheKey, 900, function () {
+            $usersPaginator =  $this->userRepository->get_users();;
+            return [
+                'users' => $usersPaginator
+            ];
+        });
+    }
+    public function search_for_user(array $data)
+    {
+        $user_number = $data['user_number'];
+        $user = $this->userRepository->find_by_user_number($user_number);
+        return $user;
     }
 }

@@ -79,6 +79,9 @@ class UserFormRequest extends FormRequest
                 'days_number' => ['sometimes', 'nullable', 'integer', 'min:1'],
                 'explaination' => ['required', 'string', 'max:255', $noHtml]
             ],
+            'search_for_user' => [
+                'user_number'  => 'required|string|exists:users',
+            ],
             default => [],
         };
     }
@@ -195,7 +198,7 @@ class UserFormRequest extends FormRequest
     private function getCarPapersAttributes(): array
     {
         $carPapersAttributes = [];
-        
+
         $allData = $this->all();
 
         if (isset($allData['car_papers']) && is_array($allData['car_papers'])) {

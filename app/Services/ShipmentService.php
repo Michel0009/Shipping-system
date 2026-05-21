@@ -337,11 +337,11 @@ class ShipmentService
     }
 
     private function get_shipment_path($shipment){
-        
+
         $startCoords = "{$shipment->start_position_lng},{$shipment->start_position_lat}";
         $endCoords = "{$shipment->end_position_lng},{$shipment->end_position_lat}";
         $fullRouteUrl = "http://router.project-osrm.org/route/v1/driving/{$startCoords};{$endCoords}?overview=full&geometries=geojson";
-        
+
         $response = @file_get_contents($fullRouteUrl);
         if ($response) {
             $data = json_decode($response, true);
@@ -351,7 +351,7 @@ class ShipmentService
         }
         return null;
     }
-    
+
 
     public function confirm_pickup(array $data)
     {
@@ -562,10 +562,10 @@ class ShipmentService
         $endCoords = "{$shipment->end_position_lng},{$shipment->end_position_lat}";
 
         $cacheKey = "shipment_route_{$shipment->id}";
-        
+
         $responseDetails['route_geometry'] = Cache::remember($cacheKey, now()->addDays(30), function () use ($startCoords, $endCoords) {
             $fullRouteUrl = "http://router.project-osrm.org/route/v1/driving/{$startCoords};{$endCoords}?overview=full&geometries=geojson";
-            
+
             $response = @file_get_contents($fullRouteUrl);
             if ($response) {
                 $data = json_decode($response, true);
@@ -582,7 +582,7 @@ class ShipmentService
             if ($driverLocation) {
                 $currentDriverCoords = "{$driverLocation['lng']},{$driverLocation['lat']}";
                 $liveUrl = "http://router.project-osrm.org/route/v1/driving/{$currentDriverCoords};{$endCoords}?overview=false";
-                
+
                 $liveResponse = @file_get_contents($liveUrl);
 
                 if ($liveResponse) {
@@ -663,7 +663,7 @@ class ShipmentService
             $shipments = $this->shipmentRepository->get_client_shipments_by_date($currentUser->id, $request['start_date'], $request['end_date']);
         }
         return $shipments;
-        
+
     }
 
     public function reward(Driver $driver)
@@ -682,7 +682,7 @@ class ShipmentService
             $create = $this->driverRepository->create_reward($reward);
             $driver->continuous_successful_shipments = 0;
             $this->driverRepository->save($driver);
-            
+
         }
     }
 

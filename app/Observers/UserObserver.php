@@ -8,11 +8,20 @@ use Illuminate\Support\Facades\Cache;
 class UserObserver
 {
     /**
+    * Handle the User "created" event.
+   */
+    public function created(User $user): void
+    {
+        $this->clearUserCache($user);
+    }
+
+    /**
      * Handle the User "updated" event.
      */
     public function updated(User $user): void
     {
         $this->clearSpecificDriverCache($user);
+        $this->clearUserCache($user);
     }
 
     /**
@@ -21,6 +30,7 @@ class UserObserver
     public function deleted(User $user): void
     {
         $this->clearAllCache($user);
+        $this->clearUserCache($user);
     }
     protected function clearSpecificDriverCache(User $user)
     {
@@ -50,5 +60,10 @@ class UserObserver
             $this->clearListCache();
         }
 
+    }
+    protected function clearUserCache($user){
+        if($user->role_id == 3){
+            Cache::tags(['user_list'])->flush();
+        }
     }
 }

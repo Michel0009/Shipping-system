@@ -87,4 +87,16 @@ class UserController extends Controller
             'message' => $result['message'],
         ], $result['code']);
     }
+    public function get_users(){
+        $result = $this->userService->get_users();
+        return response()->json($result);
+    }
+    public function search_for_user(UserFormRequest $request){
+        $validated = $request->validated();
+        $user = $this->userService->search_for_user($validated);
+        if (!$user) {
+            return response()->json(['message' => 'لا يوجد عميل بهذا الرقم'], 404);
+        }
+        return response()->json($user);
+    }
 }

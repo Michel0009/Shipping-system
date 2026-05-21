@@ -113,6 +113,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/activateUser/{id}', [UserController::class, 'activate_user_account']);
         Route::get('/badges', [DriverController::class, 'get_badges']);
         // Route::put('/badge', [DriverController::class, 'edit_badge']);
+        Route::get('/users', [UserController::class, 'get_users']);
+        Route::post('/searchForUser', [UserController::class, 'search_for_user']);
     });
 
     // Client-Driver Routes

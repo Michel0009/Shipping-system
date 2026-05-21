@@ -35,7 +35,25 @@ class UserRepository
 
     public function get_users()
     {
-        return $this->user->where('role_id', 3)->get();
+        $statusLabels = $this->getStatusLabels();
+        $users = $this->user->where('role_id', 3)
+            ->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status', 'created_at')
+            ->withAvg('reviews', 'rate')
+            ->paginate(5);
+        return $users->through(function ($user) use ($statusLabels) {
+            $user->status_label = $statusLabels[$user->status] ?? null;
+            return [
+                'id' => $user->id,
+                'user_number' => $user->user_number,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'status' => $user->status_label,
+                'rating' => number_format($user->reviews_avg_rate, 2) ?? "0.00",
+                'created_at' => $user->created_at,
+            ];;
+        });
     }
     public function get_last_user()
     {
@@ -106,7 +124,6 @@ class UserRepository
                 'status' => $user->status_label,
             ];;
         });
-
     }
     public function getStatusLabels(): array
     {
@@ -136,4 +153,27 @@ class UserRepository
     //     $this->user->where('role_id', 4)->where('status', 0)->update(['status' => 1]);
     //     $this->user->where('role_id', 4)->where('status', 1)->update(['status' => 2]);
     // }
+    public function find_by_user_number($user_number)
+    {
+        $statusLabels = User::getStatusLabels();
+        $user = $this->user
+            ->where('role_id', 3)
+            ->where('user_number', $user_number)->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status','created_at')
+            ->withAvg('reviews', 'rate')
+            ->first();
+        if (!$user) {
+            return false;
+        }
+        return [
+            'id'           => $user->id,
+            'first_name'   => $user->first_name,
+            'last_name'    => $user->last_name,
+            'email'        => $user->email,
+            'phone_number' => $user->phone_number,
+            'rating'       => number_format($user->reviews_avg_rate, 2) ?? "0.00",
+            'user_number'  => $user->user_number,
+            'status'       => $statusLabels[$user->status] ?? null,
+            'created_at'   => $user->created_at,
+        ];
+    }
 }

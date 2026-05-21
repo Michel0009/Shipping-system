@@ -234,6 +234,7 @@ class DriverService
                 'phone_number' => $user->phone_number,
                 'email' => $user->email,
                 'status' => $user->status_label,
+                'created_at' => $user->created_at,
             ];
         });
         $car = Cache::remember("driver_{$id}_car", $ttl, function () use ($id) {
@@ -262,6 +263,7 @@ class DriverService
         $badge =  $this->driverRepository->get_badge($driver);
         $statistics = $this->shipmentRepository->get_shipments_statisics_for_driver($id);
         $statistics['amount_to_pay'] = $statistics['unpaid_amount'] * 0.15;
+        $statistics['total_amount_to_pay'] = $statistics['amount_to_pay'] - $statistics['unreceived_bonuses_sum'] + $statistics['unreceived_taxes_sum'];
         return [
             'driver' => $driver,
             'user' => $user,
@@ -538,7 +540,7 @@ class DriverService
         }
         return false;
     }
-    public function download_document($type , $id)
+    public function download_document($type, $id)
     {
         $document = $this->driverRepository->find_document($type, $id);
         if (!$document) {
@@ -553,7 +555,7 @@ class DriverService
             $document,
             basename($document)
         );
-}
+    }
     public function get_badges()
     {
         return $this->driverRepository->get_badges();

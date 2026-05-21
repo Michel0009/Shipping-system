@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PostService
 {
@@ -237,50 +238,72 @@ class PostService
         return $posts;
     }
 
-    // public function choose_driver_for_post(array $data)
-    // {
-    //     $userId = Auth::id();
+    public function choose_driver_for_post(array $data)
+    {
+        $userId = Auth::id();
 
-    //     $postId = $data['post_id'];
-    //     $driverId = $data['driver_id'];
-    //     $post = $this->postRepository->find_post_for_assignment($postId, $userId);
+        $postId = $data['post_id'];
+        $driverId = $data['driver_id'];
+        $post = $this->postRepository->find_post_with_drivers($postId);
 
-    //     $acceptedDriver = $post->drivers->firstWhere('id', $driverId);
+        if ($post->user_id !== $userId || $post->finished) {
+            abort(422, 'الإعلان منتهي ومغلق بالفعل');
+        }
 
-    //     if (!$acceptedDriver->pivot) {
-    //         abort(404, 'هذا السائق لم يتقدم بعرض على هذا المنشور');
-    //     }
+        if (!$post->drivers->contains($driverId)) {
+            abort(404, 'هذا السائق لم يتقدم بعرض على هذا المنشور');
+        }
 
-    //     $driverProposedDate = $acceptedDriver->pivot->proposed_date; 
-    //     $deliveryDeadline = Carbon::parse($driverProposedDate)->addDay()->endOfDay();
+        $driver = $post->drivers->find($driverId);
         
-    //     $finalPrice = $acceptedDriver->pivot->price;
-    //     $shipment = $this->postRepository->convertPostToShipment($post, $driverId, $finalPrice, $deliveryDeadline);
+        $proposedDate = $driver->pivot->date;
+        $deadline = Carbon::parse($proposedDate)->addDay()->endOfDay();
 
-    //     $this->sendOffersNotifications($post, $driverId);
+        $shipmentNumber = time() . rand(100, 999);
+        $pin = random_int(100000, 999999);
+        $qrPin = Str::uuid()->toString();
 
-    //     return $shipment;
-    // }
+        $shipment = $this->postRepository->convert_post_to_shipment(
+            $post, 
+            $driver->id, 
+            $driver->pivot->price, 
+            $shipmentNumber, 
+            $pin, 
+            $qrPin, 
+            $deadline
+        );
+        $this->send_notifications($post, $driver->id);
 
-    // protected function sendOffersNotifications($post, int $acceptedDriverId)
-    // {
-    //     foreach ($post->drivers as $driver) {
-            // if ($driver->id == $acceptedDriverId) {
-            //     app(\App\Services\NotificationService::class)->send_notification(
-            //         $driver->id,
-            //         'تم قبول عرضك المالي!',
-            //         "مبروك، لقد وافق الشاحن على عرضك لنقل البضاعة الخاصة بالطلب رقم (#{$post->id}). يرجى مراجعة الشحنات الجارية لمباشرة العمل.",
-            //         ['shipment_id' => $post->id, 'status' => 'accepted']
-            //     );
-            // } else {
-            //     app(\App\Services\NotificationService::class)->send_notification(
-            //         $driver->id,
-            //         'تحديث بشأن إعلان الشحن',
-            //         "نشكرك على تقديم عرضك للمنشور رقم (#{$post->id})، نعتذر منك فقد تم اختيار سائق آخر يتناسب مع متطلبات الشحنة الحالية. بالتوفيق في المرات القادمة!",
-            //         ['post_id' => $post->id, 'status' => 'rejected']
-            //     );
-            // }
-    //     }
-    // }
+        return $shipment;
+    }
+
+    protected function send_notifications($post, int $acceptedDriverId)
+    {
+        $notificationService = app(\App\Services\NotificationService::class);
+        $data_body = [
+            'post_id' => $post->id,
+        ];
+
+        foreach ($post->drivers as $driver) {
+
+            if ($driver->id == $acceptedDriverId) {
+                $notificationService->send_notification(
+                    $driver->user_id,
+                    "تم قبول عرضك لنقل الشحنة للعميل الذي أرسلته مسبقا.",
+                    $post->id,
+                    'إعلانات غير فورية',
+                    $data_body
+                );
+            } else {
+                $notificationService->send_notification(
+                    $driver->user_id,
+                    "تم رفض عرضك لنقل الشحنة للعميل الذي أرسلته مسبقا.",
+                    $post->id,
+                    'إعلانات غير فورية',
+                    $data_body
+                );
+            }
+        }
+    }
 
 }

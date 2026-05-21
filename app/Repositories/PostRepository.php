@@ -112,52 +112,58 @@ class PostRepository
         return $this->transform_posts($posts);
     }
 
-    // public function find_post_for_assignment(int $postId, int $userId)
-    // {
-    //     return Post::with('drivers')
-    //         ->where('id', $postId)
-    //         ->where('user_id', $userId)
-    //         ->first();
-    // }
+    public function find_post_with_drivers(int $id)
+    {
+        return $this->post->with('drivers')->with('governorates')->find($id);
+    }
 
-    // public function convertPostToShipment(Post $post, int $driverId, float $price, $deliveryDeadline)
-    // {
-    //     return DB::transaction(function () use ($post, $driverId, $price, $deliveryDeadline) {
+    public function convert_post_to_shipment(Post $post, int $driverId, $price, $shipmentNumber, $pin, $qrPin, $deadline)
+    {
+        return DB::transaction(function () use ($post, $driverId, $price, $shipmentNumber, $pin, $qrPin, $deadline) {
+            
+            $shipment = Shipment::create([
+                'user_id'            => $post->user_id,
+                'driver_id'          => $driverId,
+                'shipment_number'    => $shipmentNumber,
+                'weight'             => $post->weight,
+                'height'             => $post->height,
+                'width'              => $post->width,
+                'length'             => $post->length,
+                'object'             => $post->object,
+                'insurance'          => $post->insurance,
+                'start_position_lat' => $post->start_position_lat,
+                'start_position_lng' => $post->start_position_lng,
+                'end_position_lat'   => $post->end_position_lat,
+                'end_position_lng'   => $post->end_position_lng,
+                'price'              => $price,
+                'pin'                => $pin,
+                'qr_pin'             => $qrPin,
+                'status'             => 'جارية',
+                'success'            => false,
+                'delivery_deadline'  => $deadline,
+            ]);
 
-    //         $shipment = Shipment::create([
-    //             'user_id' => $post->user_id,
-    //             'driver_id' => $driverId,
-    //             'weight' => $post->weight,
-    //             'length' => $post->length,
-    //             'width' => $post->width,
-    //             'height' => $post->height,
-    //             'price' => $price,
-    //             'delivery_deadline' => $deliveryDeadline,
-    //             'status' => 'ongoing',
-    //             'pin'               => random_int(100000, 999999),
-    //             'qr_code'           => Str::uuid()->toString(),
-    //             'start_lat'         => $post->start_lat,
-    //             'start_lng'         => $post->start_lng,
-    //             'end_lat'           => $post->end_lat,
-    //             'end_lng'           => $post->end_lng,
-    //         ]);
+            $start = $post->governorates
+                ->where('pivot.start_end', 'start')
+                ->first();
 
-    //         // 2. ربط المحافظات بالشحنة الجديدة (علاقة Many-to-Many للبداية والنهاية)
-    //         // نأخذ المحافظات المرتبطة بالبوست الأساسي وننقلها للشحنة
-    //         if ($post->start_governorate_id && $post->end_governorate_id) {
-    //             $shipment->governorates()->attach([
-    //                 $post->start_governorate_id => ['type' => 'start'],
-    //                 $post->end_governorate_id   => ['type' => 'end']
-    //             ]);
-    //         }
+            $end = $post->governorates
+                ->where('pivot.start_end', 'end')
+                ->first();
 
-    //         // 3. تحديث حالة المنشور إلى منتهي (finished = true) حتى لا يظهر بالاعلانات
-    //         $post->update([
-    //             'finished' => true
-    //         ]);
+            $shipment->governorates()->attach([
+                $start->id => ['start_end' => 'start']
+            ]);
+            $shipment->governorates()->attach([
+                $end->id => ['start_end' => 'end']
+            ]);
 
-    //         return $shipment;
-    //     });
-    // }
+            $post->update([
+                'finished' => true
+            ]);
+
+            return $shipment;
+        });
+    }
     
 }

@@ -306,4 +306,11 @@ class PostService
         }
     }
 
+    public function get_applied_posts()
+    {
+        $driver = $this->driverRepository->find_by_user_ID(auth()->id());
+        $posts = $this->postRepository->get_applied_posts_by_driver_id($driver->id);
+        return $posts;   
+    }
+
 }

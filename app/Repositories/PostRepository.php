@@ -165,5 +165,32 @@ class PostRepository
             return $shipment;
         });
     }
+
+    public function get_applied_posts_by_driver_id($driverId)
+    {
+        $posts = $this->post->whereHas('drivers', function ($query) use ($driverId) {
+            $query->where('driver_id', $driverId);
+        })
+        ->with(['governorates', 'drivers' => function ($query) use ($driverId) {
+            $query->where('driver_id', $driverId);
+        }])
+        ->latest()
+        ->get();
+
+        return $posts->map(function ($post) {
+
+            $start = $post->governorates->where('pivot.start_end', 'start')->first();
+            $post['start_governorate'] = $start?->name;
+
+            $end = $post->governorates->where('pivot.start_end', 'end')->first();
+            $post['end_governorate'] = $end?->name;
+
+            $myOffer = $post->drivers->first();
+            $post['my_price'] = $myOffer->pivot->price;
+            $post['my_date']  = $myOffer->pivot->date;
+
+            return $post->makeHidden(['governorates', 'drivers']);
+        });
+    }
     
 }

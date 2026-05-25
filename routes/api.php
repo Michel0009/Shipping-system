@@ -77,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/post/apply', [PostController::class, 'apply_post'])->middleware('user.status');
         Route::delete('/post/cancel/{id}', [PostController::class, 'cancel_apply']);
         Route::get('/posts/driver/suitable', [PostController::class, 'suitable_posts_for_driver']);
+        Route::get('/posts/applied/driver', [PostController::class, 'get_applied_posts']);
     });
 
     // Admin Routes

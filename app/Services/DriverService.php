@@ -121,6 +121,11 @@ class DriverService
             if (!isset($res1['routes'][0])) continue;
 
             $distanceToStart = $res1['routes'][0]['distance'] / 1000;
+            // 1. Max: 50km for driver
+            $maxAllowedDistance = 50;
+            if ($distanceToStart > $maxAllowedDistance) {
+                continue;
+            }
 
             // Get vehicle type for price calculation
             $vehicle = $driver->car;

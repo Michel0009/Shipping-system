@@ -233,7 +233,7 @@ class PostService
         $driver = $this->driverRepository->get_driver_with_vehicle_and_governorates(auth()->id());
         $driverGovIds = $driver->governorates->pluck('id')->toArray();
 
-        $posts = $this->postRepository->get_available_posts_for_vehicle($driver->car->vehicle_type, $driverGovIds);
+        $posts = $this->postRepository->get_available_posts_for_vehicle($driver->car->vehicle_type, $driverGovIds, $driver->id);
 
         return $posts;
     }

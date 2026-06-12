@@ -38,7 +38,7 @@ class PostFormRequest extends FormRequest
                 'end_governorate_id' => 'required|exists:governorates,id',
                 'start_location_details' => ['required', 'string', 'max:500', new NoHtml],
                 'end_location_details' => ['required', 'string', 'max:500', new NoHtml],
-                'last_date' => 'required|date|after_or_equal:today',
+                'last_date' => 'required|date|after_or_equal:today|before_or_equal:+6 months',
             ],
             'update_prices' => [
                 'post_id' => 'required|exists:posts,id',
@@ -62,6 +62,7 @@ class PostFormRequest extends FormRequest
     {
         return [
             'last_date.after_or_equal' => 'تاريخ انتهاء الإعلان يجب أن يكون تاريخاً مستقبلياً.',
+            'last_date.before_or_equal'=> 'تاريخ انتهاء الإعلان لا يمكن أن يتجاوز 6 أشهر من تاريخ اليوم.',
             'date.after_or_equal' => 'تاريخ التسليم يجب أن يكون تاريخاً مستقبلياً.',
             'max_price.gt' => 'يجب أن يكون الحد الأعلى للسعر أكبر من الحد الأدنى.',
             'numeric' => 'حقل :attribute يجب أن يكون رقماً.',

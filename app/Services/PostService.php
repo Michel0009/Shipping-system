@@ -233,7 +233,7 @@ class PostService
         $driver = $this->driverRepository->get_driver_with_vehicle_and_governorates(auth()->id());
         $driverGovIds = $driver->governorates->pluck('id')->toArray();
 
-        $posts = $this->postRepository->get_available_posts_for_vehicle($driver->car->vehicle_type, $driverGovIds);
+        $posts = $this->postRepository->get_available_posts_for_vehicle($driver->car->vehicle_type, $driverGovIds, $driver->id);
 
         return $posts;
     }
@@ -304,6 +304,13 @@ class PostService
                 );
             }
         }
+    }
+
+    public function get_applied_posts()
+    {
+        $driver = $this->driverRepository->find_by_user_ID(auth()->id());
+        $posts = $this->postRepository->get_applied_posts_by_driver_id($driver->id);
+        return $posts;   
     }
 
 }

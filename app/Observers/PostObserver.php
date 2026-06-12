@@ -12,6 +12,11 @@ class PostObserver
         Cache::forget('user_posts_' . $post->user_id);
     }
 
+    public function updated(Post $post)
+    {
+        Cache::forget('user_posts_' . $post->user_id);
+    }
+
     public function deleted(Post $post)
     {
         Cache::forget('user_posts_' . $post->user_id);

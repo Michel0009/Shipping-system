@@ -91,7 +91,7 @@ class PostRepository
             ])->firstOrFail();
     }
 
-    public function get_available_posts_for_vehicle($type, array $driverGovIds)
+    public function get_available_posts_for_vehicle($type, array $driverGovIds, $driverId)
     {
         $posts = $this->post->where('finished', false)
             ->where('weight', '>=', $type->min_weight)->where('weight', '<=', $type->max_weight)
@@ -105,6 +105,9 @@ class PostRepository
             ->whereHas('governorates', function ($query) use ($driverGovIds) {
                 $query->whereIn('governorate_id', $driverGovIds)
                       ->where('governorate_post.start_end', 'end');
+            })
+            ->whereDoesntHave('drivers', function ($query) use ($driverId) {
+                $query->where('driver_id', $driverId);
             })
             ->with('governorates')
             ->latest()
@@ -163,6 +166,33 @@ class PostRepository
             ]);
 
             return $shipment;
+        });
+    }
+
+    public function get_applied_posts_by_driver_id($driverId)
+    {
+        $posts = $this->post->where('finished', false)->whereHas('drivers', function ($query) use ($driverId) {
+            $query->where('driver_id', $driverId);
+        })
+        ->with(['governorates', 'drivers' => function ($query) use ($driverId) {
+            $query->where('driver_id', $driverId);
+        }])
+        ->latest()
+        ->get();
+
+        return $posts->map(function ($post) {
+
+            $start = $post->governorates->where('pivot.start_end', 'start')->first();
+            $post['start_governorate'] = $start?->name;
+
+            $end = $post->governorates->where('pivot.start_end', 'end')->first();
+            $post['end_governorate'] = $end?->name;
+
+            $myOffer = $post->drivers->first();
+            $post['my_price'] = $myOffer->pivot->price;
+            $post['my_date']  = $myOffer->pivot->date;
+
+            return $post->makeHidden(['governorates', 'drivers']);
         });
     }
     

@@ -85,4 +85,10 @@ class PostController extends Controller
             'data'    => $shipment
         ], 200);
     }
+
+    public function get_applied_posts()
+    {
+        $posts = $this->postService->get_applied_posts();
+        return response()->json($posts);
+    }
 }

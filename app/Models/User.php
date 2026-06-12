@@ -112,4 +112,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Post::class);
     }
+
+    public function latestBan()
+    {
+        return $this->hasOne(Ban::class)->latestOfMany();
+    }
 }

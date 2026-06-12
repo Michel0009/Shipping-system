@@ -38,7 +38,6 @@ class UserRepository
         $statusLabels = $this->getStatusLabels();
         $users = $this->user->where('role_id', 3)
             ->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status', 'created_at')
-            ->withAvg('reviews', 'rate')
             ->paginate(5);
         return $users->through(function ($user) use ($statusLabels) {
             $user->status_label = $statusLabels[$user->status] ?? null;
@@ -50,7 +49,6 @@ class UserRepository
                 'email' => $user->email,
                 'phone_number' => $user->phone_number,
                 'status' => $user->status_label,
-                'rating' => number_format($user->reviews_avg_rate, 2) ?? "0.00",
                 'created_at' => $user->created_at,
             ];;
         });
@@ -153,8 +151,7 @@ class UserRepository
         $statusLabels = User::getStatusLabels();
         $user = $this->user
             ->where('role_id', 3)
-            ->where('user_number', $user_number)->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status','created_at')
-            ->withAvg('reviews', 'rate')
+            ->where('user_number', $user_number)->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status', 'created_at')
             ->first();
         if (!$user) {
             return false;
@@ -165,7 +162,6 @@ class UserRepository
             'last_name'    => $user->last_name,
             'email'        => $user->email,
             'phone_number' => $user->phone_number,
-            'rating'       => number_format($user->reviews_avg_rate, 2) ?? "0.00",
             'user_number'  => $user->user_number,
             'status'       => $statusLabels[$user->status] ?? null,
             'created_at'   => $user->created_at,
@@ -174,5 +170,108 @@ class UserRepository
     public function get_drivers_user()
     {
         return $this->user->where('role_id', 4)->get();
+    }
+    public function find_client_user($id)
+    {
+        $statusLabels = User::getStatusLabels();
+        $user = $this->user->where('role_id', 3)->where('id', $id)->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status', 'created_at')->first();
+        if (!$user) {
+            return false;
+        }
+        return [
+            'id' => $user->id,
+            'user_number' => $user->user_number,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email,
+            'phone_number' => $user->phone_number,
+            'status' => $statusLabels[$user->status] ?? null,
+            'created_at' => $user->created_at,
+        ];
+    }
+    public function get_blocked_users()
+    {
+        $users = $this->user->where('status', 3)
+            ->where('role_id', 3)
+            ->with('latestBan')
+            ->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status', 'created_at')
+            ->paginate(5);
+        return $users->through(function ($user) {
+            return [
+                'id' => $user->id,
+                'user_number' => $user->user_number,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'status' => "محظور",
+                'ban_end_date' => $user->latestBan ? $user->latestBan->end_date : null,
+                'ban_explanation' => $user->latestBan ? $user->latestBan->explaination : null,
+                'created_at' => $user->created_at,
+            ];
+        });
+    }
+    public function get_blocked_sub_admins()
+    {
+        $users = $this->user->where('status', 3)
+            ->where('role_id', 2)
+            ->with('latestBan')
+            ->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status', 'created_at')
+            ->paginate(5);
+        return $users->through(function ($user) {
+            return [
+                'id' => $user->id,
+                'user_number' => $user->user_number,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'status' => "محظور",
+                'ban_end_date' => $user->latestBan ? $user->latestBan->end_date : null,
+                'ban_explanation' => $user->latestBan ? $user->latestBan->explaination : null,
+                'created_at' => $user->created_at,
+            ];
+        });
+    }
+    public function get_user_statistics()
+    {
+        $users = $this->user->whereIn('role_id', [3, 4])
+            ->get(['role_id', 'status']);
+
+        $totalUsers = $users->count();
+
+        $clientsCount        = $users->where('role_id', 3)->where('status', 0)->count();
+        $driversCount        = $users->where('role_id', 4)->whereIn('status', [0, 1])->count();
+        $frozenDriversCount  = $users->where('role_id', 4)->where('status', 2)->count();
+        $blockedClientsCount = $users->where('role_id', 3)->where('status', 3)->count();
+        $blockedDriversCount = $users->where('role_id', 4)->where('status', 3)->count();
+
+        $calculatePercentage = function ($count) use ($totalUsers) {
+            return $totalUsers > 0 ? round(($count / $totalUsers) * 100, 2) : 0;
+        };
+
+        return [
+            'clients_count'      => $clientsCount,
+            'clients_percentage' => $calculatePercentage($clientsCount),
+
+            'drivers_count'      => $driversCount,
+            'drivers_percentage' => $calculatePercentage($driversCount),
+
+            'frozen_drivers_count'      => $frozenDriversCount,
+            'frozen_drivers_percentage' => $calculatePercentage($frozenDriversCount),
+
+            'blocked_clients_count'      => $blockedClientsCount,
+            'blocked_clients_percentage' => $calculatePercentage($blockedClientsCount),
+
+            'blocked_drivers_count'      => $blockedDriversCount,
+            'blocked_drivers_percentage' => $calculatePercentage($blockedDriversCount),
+        ];
+    }
+    public function get_clients_count()
+    {
+       return $this->user->where('role_id', 3)->count();
+    }
+    public function get_drivers_count(){
+        return $this->user->where('role_id', 4)->count();
     }
 }

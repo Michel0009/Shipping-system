@@ -560,4 +560,8 @@ class DriverService
     {
         return $this->driverRepository->get_badges();
     }
+    public function get_blocked_drivers()
+    {
+        return $this->driverRepository->get_blocked_drivers();
+    }
 }

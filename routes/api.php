@@ -8,6 +8,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleTypeController;
 use Illuminate\Support\Facades\Route;
@@ -96,6 +97,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/contractTerm/create', [ContractTermController::class, 'create_contract_term']);
         Route::get('/contractTerms', [ContractTermController::class, 'get_contract_terms']);
         Route::delete('/contractTerm/{id}', [ContractTermController::class, 'delete_contract_term']);
+        Route::get('/blockedDrivers', [DriverController::class, 'get_blocked_drivers']);
+        Route::get('/blockedUsers', [UserController::class, 'get_blocked_users']);
+        Route::get('/blockedSubAdmins', [UserController::class, 'get_blocked_sub_admins']);
+        Route::post('/statistics', [StatisticsController::class, 'get_statistics']);
+        Route::get('/generalStatistics', [StatisticsController::class, 'get_general_statistics']);
+        Route::post('/exportStatisticsPdf', [StatisticsController::class, 'export_statistics_pdf']);
     });
 
     // Employee-Admin Routes
@@ -121,6 +128,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Route::put('/badge', [DriverController::class, 'edit_badge']);
         Route::get('/users', [UserController::class, 'get_users']);
         Route::post('/searchForUser', [UserController::class, 'search_for_user']);
+        Route::get('/userDetails/{id}', [UserController::class, 'get_user_details_for_admin']);
+        Route::post('/createDriverContract', [ContractTermController::class, 'create_driver_contract']);
+
     });
 
     // Client-Driver Routes

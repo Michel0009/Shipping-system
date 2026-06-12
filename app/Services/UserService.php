@@ -647,4 +647,15 @@ class UserService
         $user = $this->userRepository->find_by_user_number($user_number);
         return $user;
     }
+    public function get_user_details_for_admin($id){
+       return $this->userRepository->find_client_user($id);
+    }
+    public function get_blocked_users()
+    {
+        return $this->userRepository->get_blocked_users();
+    }
+    public function get_blocked_sub_admins()
+    {
+        return $this->userRepository->get_blocked_sub_admins();
+    }
 }

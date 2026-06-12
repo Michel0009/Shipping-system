@@ -26,5 +26,4 @@ class ContractTermRepository
     {
         return $this->contractTerm->where('id', $id)->delete();
     }
-
 }

@@ -59,10 +59,11 @@ class UserController extends Controller
             'message' => $result['message'],
         ], $result['code']);
     }
-    public function block(UserFormRequest $request){
+    public function block(UserFormRequest $request)
+    {
         $result = $this->userService->block($request->validated());
 
-        if(isset($result['deadline'])){
+        if (isset($result['deadline'])) {
             return response()->json([
                 'message' => $result['message'],
                 'deadline' => $result['deadline']
@@ -72,7 +73,8 @@ class UserController extends Controller
             'message' => $result['message'],
         ], $result['code']);
     }
-    public function unblock($id){
+    public function unblock($id)
+    {
         $result = $this->userService->unblock($id);
 
         return response()->json([
@@ -80,23 +82,44 @@ class UserController extends Controller
         ], $result['code']);
     }
 
-    public function activate_user_account($id){
+    public function activate_user_account($id)
+    {
         $result = $this->userService->activate_user_account($id);
 
         return response()->json([
             'message' => $result['message'],
         ], $result['code']);
     }
-    public function get_users(){
+    public function get_users()
+    {
         $result = $this->userService->get_users();
         return response()->json($result);
     }
-    public function search_for_user(UserFormRequest $request){
+    public function search_for_user(UserFormRequest $request)
+    {
         $validated = $request->validated();
         $user = $this->userService->search_for_user($validated);
         if (!$user) {
             return response()->json(['message' => 'لا يوجد عميل بهذا الرقم'], 404);
         }
         return response()->json($user);
+    }
+    public function get_user_details_for_admin($id)
+    {
+        $user = $this->userService->get_user_details_for_admin($id);
+        if (!$user) {
+            return response()->json(['message' => 'العميل غير موجود'], 404);
+        }
+        return response()->json($user);
+    }
+    public function get_blocked_users()
+    {
+        $result = $this->userService->get_blocked_users();
+        return response()->json($result);
+    }
+    public function get_blocked_sub_admins()
+    {
+        $result = $this->userService->get_blocked_sub_admins();
+        return response()->json($result);
     }
 }

@@ -135,4 +135,9 @@ class DriverController extends Controller
         $badges = $this->driverService->get_badges();
         return response()->json($badges);
     }
+    public function get_blocked_drivers()
+    {
+        $result = $this->driverService->get_blocked_drivers();
+        return response()->json($result);
+    }
 }

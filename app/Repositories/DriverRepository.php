@@ -244,7 +244,7 @@ class DriverRepository
             return Car_paper::where('id', $id)->value('car_file');
         }
         return null;
-}
+    }
     public function get_badges()
     {
         return Badge::get();
@@ -255,5 +255,27 @@ class DriverRepository
         return $this->driver->where('user_id', $userId)
             ->with(['car.vehicle_type', 'governorates'])
             ->first();
+    }
+    public function get_blocked_drivers()
+    {
+        $drivers = User::where('status', 3)
+            ->where('role_id', 4)
+            ->with('latestBan')
+            ->select('id', 'user_number', 'first_name', 'last_name', 'email', 'phone_number', 'status', 'created_at')
+            ->paginate(5);
+        return $drivers->through(function ($driver) {
+            return [
+                'user_id' => $driver->id,
+                'user_number' => $driver->user_number,
+                'first_name' => $driver->first_name,
+                'last_name' => $driver->last_name,
+                'email' => $driver->email,
+                'phone_number' => $driver->phone_number,
+                'status' => "محظور",
+                'ban_end_date' => $driver->latestBan ? $driver->latestBan->end_date : null,
+                'ban_explanation' => $driver->latestBan ? $driver->latestBan->explaination : null,
+                'created_at' => $driver->created_at,
+            ];
+        });
     }
 }

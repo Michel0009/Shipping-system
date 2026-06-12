@@ -22,20 +22,54 @@ class ContractTermFormRequest extends FormRequest
      */
     public function rules(): array
     {
-      return match($this->route()->getActionMethod()) {
+        return match ($this->route()->getActionMethod()) {
 
-        'create_contract_term' => [
-            'order' => 'required|numeric',
-            'term_text' => ['required', 'string', new NoHtml],
-        ],
-
-        default => [],
-      };
+            'create_contract_term' => [
+                'order' => 'required|numeric',
+                'term_text' => ['required', 'string', new NoHtml],
+            ],
+            'create_driver_contract' => [
+                'company_name'   => 'required|string|max:255',
+                'cr_number'      => 'nullable|string|max:100',
+                'hq'             => 'required|string|max:255',
+                'representative' => 'required|string|max:255',
+                'name'             => 'required|string|max:255',
+                'father_name'      => 'required|string|max:255',
+                'mother_name'      => 'required|string|max:255',
+                'birth_place_date' => 'required|string|max:255',
+                'national_id'      => 'required|string|max:50',
+                'amana'            => 'required|string|max:255',
+                'qaid'             => 'required|string|max:255',
+                'address'          => 'required|string|max:255',
+                'grant_date'       => 'required|string|max:50',
+            ],
+            default => [],
+        };
     }
-
+    public function attributes(): array
+    {
+        return match ($this->route()->getActionMethod()) {
+            'create_driver_contract' => [
+                'company_name'   => 'اسم الشركة',
+                'cr_number'      => 'رقم السجل التجاري',
+                'hq'             => 'المقر',
+                'representative' => 'اسم المفوض بالتوقيع',
+                'name'             => 'الاسم الكامل للسائق',
+                'father_name'      => 'اسم الأب',
+                'mother_name'      => 'اسم الأم',
+                'birth_place_date' => 'محل وتاريخ الولادة',
+                'national_id'      => 'الرقم الوطني / رقم البطاقة',
+                'amana'            => 'الأمانة',
+                'qaid'             => 'القيد',
+                'address'          => 'العنوان السكني',
+                'grant_date'       => 'تاريخ منح البطاقة',
+            ],
+            default => [],
+        };
+    }
     public function messages(): array
     {
-        return match($this->route()->getActionMethod()) {
+        return match ($this->route()->getActionMethod()) {
 
             'create_contract_term' => [
                 'order.required' => 'ترتيب البند مطلوب',
@@ -44,9 +78,12 @@ class ContractTermFormRequest extends FormRequest
                 'term_text.required' => 'البند مطلوب',
                 'term_text.string' => 'البند يجب أن يكون نصاً',
             ],
-
+            'create_driver_contract' => [
+                'required' => 'حقل :attribute مطلوب ولا يمكن تركه فارغاً.',
+                'string'   => 'حقل :attribute يجب أن يكون نصاً.',
+                'max'      => 'حقل :attribute تجاوز الحد الأقصى للأحرف المسموحة.',
+            ],
             default => [],
         };
     }
-
 }

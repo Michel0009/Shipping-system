@@ -37,5 +37,11 @@ class ContractTermController extends Controller
             'message' => 'تم حذف هذا البند من العقد',
         ]);
     }
-
+    public function create_driver_contract(ContractTermFormRequest $request)
+    {
+        $result = $this->contractTermService->create_driver_contract($request->validated());
+        return response($result)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="driver_contract.pdf"');
+    }
 }

@@ -18,32 +18,24 @@ class BadgeSeeder extends Seeder
           'name' => 'مُعتمد',
           'text' => 'هوية موثقة وسجل جنائي نظيف.',
           'continuous_successful_shipments_condition' => '0',
-          'successful_shipments_percentage_condition' => '0',
-          'continuous_failed_shipments_condition' => '0',
         ]);
         Badge::query()->create([
           'level' => '1',
           'name' => 'مُنتظم',
           'text' => 'منضبط بالمواعيد ونسبة نجاح شحناته تتجاوز ال 70% مع التزامه بتحقيق أكثر من 15 شحنة ناجحة على التوالي.',
           'continuous_successful_shipments_condition' => '15',
-          'successful_shipments_percentage_condition' => '0.7',
-          'continuous_failed_shipments_condition' => '2',
         ]);
         Badge::query()->create([
           'level' => '2',
           'name' => 'خبير',
           'text' => 'سائق محترف بخبرة واسعة في التعامل مع مختلف أنواع الشحنات ونسبة نجاح شحناته تتجاوز ال 80% مع التزامه بتحقيق أكثر من 30 شحنة ناجحة على التوالي.',
           'continuous_successful_shipments_condition' => '30',
-          'successful_shipments_percentage_condition' => '0.8',
-          'continuous_failed_shipments_condition' => '3',
         ]);
         Badge::query()->create([
           'level' => '3',
           'name' => 'مضمون',
           'text' => 'بضاعتك في أمان، هذا السائق مغطى بضمان مالي كامل من التطبيق.',
           'continuous_successful_shipments_condition' => '60',
-          'successful_shipments_percentage_condition' => '0.9',
-          'continuous_failed_shipments_condition' => '3',
         ]);
 
     }

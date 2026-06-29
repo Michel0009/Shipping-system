@@ -46,7 +46,6 @@ class PostService
             $minFuel = min($fuelPrices);
             $maxFuel = max($fuelPrices);
             $baseRate = $coeffs['base_rate'];
-            $insuranceRate = $coeffs['insurance'] ?? 0.3;
 
             $minVehCoeff = $suitableVehicles->min('vehicle_coefficient');
             $maxVehCoeff = $suitableVehicles->max('vehicle_coefficient');
@@ -65,10 +64,10 @@ class PostService
             
             $maxPrice = ($maxBaseFare + $distanceCost + ($distance * $maxCons * $maxFuel)) * $maxVehCoeff * $weightFactor;
 
-            if ($data['insurance']) {
-                $minPrice *= (1 + $insuranceRate);
-                $maxPrice *= (1 + $insuranceRate);
-            }
+            // if ($data['insurance']) {
+            //     $minPrice *= (1 + $insuranceRate);
+            //     $maxPrice *= (1 + $insuranceRate);
+            // }
 
             $data['min_price'] = round($minPrice);
             $data['max_price'] = round($maxPrice);

@@ -37,11 +37,6 @@ class CoefficientSeeder extends Seeder
                 'value' => 3000,
             ],
             [
-                'name' => 'insurance',
-                'type' => 'insurance',
-                'value' => 0.3,
-            ],
-            [
                 'name' => 'reward',
                 'type' => 'reward',
                 'value' => 50000,

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->decimal('width', 5, 2);
             $table->decimal('length', 5, 2);
             $table->string('object');
-            $table->boolean('insurance');
+            // $table->boolean('insurance');
             $table->decimal('start_position_lat', 10, 8);
             $table->decimal('start_position_lng', 11, 8);
             $table->decimal('end_position_lat', 10, 8);

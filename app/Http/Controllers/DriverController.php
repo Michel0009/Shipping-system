@@ -135,6 +135,16 @@ class DriverController extends Controller
         $badges = $this->driverService->get_badges();
         return response()->json($badges);
     }
+
+    public function edit_badge(DriverFormRequest $request, $id)
+    {
+        $this->driverService->edit_badge($id, $request->validated());
+
+        return response()->json([
+            'message' => 'تم تعديل نظام إعطاء هذه الشارة بنجاح',
+        ]);
+    }
+
     public function get_blocked_drivers()
     {
         $result = $this->driverService->get_blocked_drivers();

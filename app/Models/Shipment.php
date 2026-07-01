@@ -15,7 +15,7 @@ class Shipment extends Model
         'length',
         'weight',
         'object',
-        'insurance',
+        // 'insurance',
         'start_position_lat',
         'start_position_lng',
         'end_position_lat',

@@ -93,6 +93,10 @@ class DriverFormRequest extends FormRequest
                 'type' => 'required|string|in:license,unconvicted,car',
                 'id' => 'required|integer',
             ],
+            'edit_badge' => [
+                'continuous_successful_shipments_condition' => 'required|numeric|gt:0',
+            ],
+
             default => [],
         };
     }
@@ -150,6 +154,11 @@ class DriverFormRequest extends FormRequest
                 'value.required' => 'قيمة الضريبة مطلوبة',
                 'value.integer' => 'يجب أن تكون قيمة الضريبة رقماً صحيحاً',
                 'value.gt' => 'قيمة الضريبة يجب أن تكون أكبر من الصفر.',
+            ],
+            'edit_badge' => [
+                'continuous_successful_shipments_condition.required' => 'عدد الشحنات الناجحة مطلوب',
+                'continuous_successful_shipments_condition.numeric' => 'يجب أن يكون عدد الشحنات الناجحة رقماً',
+                'continuous_successful_shipments_condition.gt' => 'يجب أن يكون عدد الشحنات الناجحة أكبر من الصفر',
             ],
             default => [],
         };

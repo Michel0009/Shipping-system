@@ -140,13 +140,6 @@ class ShipmentController extends Controller
         );
     }
 
-    public function get_shipments_with_insurance()
-    {
-        return response()->json(
-            $this->shipmentService->get_shipments_with_insurance()
-        );
-    }
-
     public function get_shipment_by_id($id)
     {
         $shipment = $this->shipmentService->get_shipment_by_id($id);

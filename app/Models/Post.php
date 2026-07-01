@@ -13,7 +13,7 @@ class Post extends Model
         'width',
         'length',
         'object',
-        'insurance',
+        // 'insurance',
         'start_position_lat',
         'start_position_lng',
         'end_position_lat',

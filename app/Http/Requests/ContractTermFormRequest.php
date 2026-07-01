@@ -43,6 +43,9 @@ class ContractTermFormRequest extends FormRequest
                 'address'          => 'required|string|max:255',
                 'grant_date'       => 'required|string|max:50',
             ],
+            'update_contract_term_order' => [
+                'order' => 'required|numeric',
+            ],
             default => [],
         };
     }
@@ -82,6 +85,10 @@ class ContractTermFormRequest extends FormRequest
                 'required' => 'حقل :attribute مطلوب ولا يمكن تركه فارغاً.',
                 'string'   => 'حقل :attribute يجب أن يكون نصاً.',
                 'max'      => 'حقل :attribute تجاوز الحد الأقصى للأحرف المسموحة.',
+            ],
+            'update_contract_term_order' => [
+                'order.required' => 'ترتيب البند مطلوب',
+                'order.numeric' => 'ترتيب البند يجب أن يكون رقماً',
             ],
             default => [],
         };

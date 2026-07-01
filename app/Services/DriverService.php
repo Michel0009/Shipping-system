@@ -92,7 +92,6 @@ class DriverService
         $coeff = $this->driverRepository->get_coefficients();
 
         $baseRate = $coeff['base_rate'] ?? 500;
-        $insuranceRate = $coeff['insurance'] ?? 0.3;
 
         // 2. Distance between start_position and end_position
         $shipmentStart = "{$shipment['start_position_lng']},{$shipment['start_position_lat']}";
@@ -149,9 +148,9 @@ class DriverService
             $weightFactor = $w < 50 ? 1 : ($w < 200 ? 1.2 : 1.5);
             $price *= $weightFactor;
 
-            if ($shipment['insurance']) {
-                $price += $price * $insuranceRate;
-            }
+            // if ($shipment['insurance']) {
+            //     $price += $price * $insuranceRate;
+            // }
 
             // Rates
             $rating = round($driver->reviews->avg('rate'), 2);
@@ -576,6 +575,12 @@ class DriverService
     {
         return $this->driverRepository->get_badges();
     }
+
+    public function edit_badge($id, array $data)
+    {      
+        return $this->driverRepository->update_badge($id, ['continuous_successful_shipments_condition' => $data['continuous_successful_shipments_condition']]);
+    }
+
     public function get_blocked_drivers()
     {
         return $this->driverRepository->get_blocked_drivers();

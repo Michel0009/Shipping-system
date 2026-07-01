@@ -133,7 +133,6 @@ class PostRepository
                 'width'              => $post->width,
                 'length'             => $post->length,
                 'object'             => $post->object,
-                'insurance'          => $post->insurance,
                 'start_position_lat' => $post->start_position_lat,
                 'start_position_lng' => $post->start_position_lng,
                 'end_position_lat'   => $post->end_position_lat,

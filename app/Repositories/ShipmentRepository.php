@@ -29,7 +29,6 @@ class ShipmentRepository
             'width' => $shipmentData['width'],
             'length' => $shipmentData['length'],
             'object' => $shipmentData['object'],
-            'insurance' => $shipmentData['insurance'],
             'start_position_lat' => $shipmentData['start_position_lat'],
             'start_position_lng' => $shipmentData['start_position_lng'],
             'end_position_lat' => $shipmentData['end_position_lat'],
@@ -120,12 +119,6 @@ class ShipmentRepository
         return $this->transform_shipments($shipments);
     }
 
-    public function get_shipments_with_insurance()
-    {
-        $shipments = $this->shipment->where('insurance', true)->with('governorates')->latest()->paginate(10);
-        return $this->transform_shipments($shipments);
-    }
-
     private function transform_shipments($shipments)
     {
         return $shipments->through(function ($shipment) {
@@ -148,7 +141,6 @@ class ShipmentRepository
                 'length' => $shipment->length,
                 'weight' => $shipment->weight,
                 'object' => $shipment->object,
-                'insurance' => $shipment->insurance,
                 'price' => $shipment->price,
                 'status' => $shipment->status,
                 'success' => $shipment->success,
@@ -244,7 +236,6 @@ class ShipmentRepository
                 'length' => $shipment->length,
                 'weight' => $shipment->weight,
                 'object' => $shipment->object,
-                'insurance' => $shipment->insurance,
                 'price' => $shipment->price,
                 'status' => $shipment->status,
                 'success' => $shipment->success,

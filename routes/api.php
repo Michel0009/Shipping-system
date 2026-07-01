@@ -99,6 +99,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/contractTerm/create', [ContractTermController::class, 'create_contract_term']);
         Route::get('/contractTerms', [ContractTermController::class, 'get_contract_terms']);
         Route::delete('/contractTerm/{id}', [ContractTermController::class, 'delete_contract_term']);
+        Route::put('/contractTermOrder/{id}', [ContractTermController::class, 'update_contract_term_order']);
+
+        Route::put('/badge/{id}', [DriverController::class, 'edit_badge']);
+
         Route::get('/blockedDrivers', [DriverController::class, 'get_blocked_drivers']);
         Route::get('/blockedUsers', [UserController::class, 'get_blocked_users']);
         Route::get('/blockedSubAdmins', [UserController::class, 'get_blocked_sub_admins']);
@@ -120,7 +124,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/shipments', [ShipmentController::class, 'get_shipments']);
         Route::get('/shipments/driver/{driver_id}', [ShipmentController::class, 'get_shipments_by_driver_id']);
-        Route::get('/shipments/insured', [ShipmentController::class, 'get_shipments_with_insurance']);
 
         Route::get('/reports', [ReportController::class, 'get_reports']);
         Route::post('/sendWarning', [ReportController::class, 'send_warning']);
@@ -128,7 +131,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/sendNotificationForAll', [ReportController::class, 'send_notification_for_all']);
         Route::get('/activateUser/{id}', [UserController::class, 'activate_user_account']);
         Route::get('/badges', [DriverController::class, 'get_badges']);
-        // Route::put('/badge', [DriverController::class, 'edit_badge']);
+
         Route::get('/users', [UserController::class, 'get_users']);
         Route::post('/searchForUser', [UserController::class, 'search_for_user']);
         Route::get('/userDetails/{id}', [UserController::class, 'get_user_details_for_admin']);

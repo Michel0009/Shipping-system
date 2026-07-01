@@ -39,7 +39,6 @@ class ShipmentService
             'width' => $data['width'],
             'length' => $data['length'],
             'object' => $data['object'],
-            'insurance' => $data['insurance'],
             'start_position_lat' => $data['start_position_lat'],
             'start_position_lng' => $data['start_position_lng'],
             'end_position_lat' => $data['end_position_lat'],
@@ -411,7 +410,7 @@ class ShipmentService
             ];
         }
 
-        if ($shipment->status !== 'قيد التوصيل' && $shipment->status !== 'جارية') {
+        if ($shipment->status !== 'قيد التوصيل') {
             return [
                 'message' => "لا يمكن تأكيد الاستلام في هذه الحالة",
                 'status_code' => 401
@@ -488,16 +487,6 @@ class ShipmentService
 
         return Cache::tags(['shipments_driver_' . $driver_id])->remember($cacheKey, 900, function () use ($driver_id) {
             return $this->shipmentRepository->get_shipments_for_driver($driver_id);
-        });
-    }
-
-    public function get_shipments_with_insurance()
-    {
-        $page = request('page', 1);
-        $cacheKey = "insured_shipments_page_" . $page;
-
-        return Cache::tags(['shipments_insured'])->remember($cacheKey, 900, function () {
-            return $this->shipmentRepository->get_shipments_with_insurance();
         });
     }
 

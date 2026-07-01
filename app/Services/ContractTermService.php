@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\ContractTermRepository;
+use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -19,6 +20,7 @@ class ContractTermService
 
     public function create_contract_term(array $data)
     {
+        $this->contractTermRepository->shift_orders_for_creation($data['order']);
         $this->contractTermRepository->create($data);
     }
 
@@ -29,7 +31,10 @@ class ContractTermService
 
     public function delete_contract_term($id)
     {
-        return $this->contractTermRepository->delete($id);
+        $term = $this->contractTermRepository->find($id);
+        $deletedOrder = $term->order;
+        $this->contractTermRepository->delete($id);
+        $this->contractTermRepository->shift_orders_for_deletion($deletedOrder);
     }
     public function create_driver_contract(array $data)
     {
@@ -82,5 +87,21 @@ class ContractTermService
         $mpdf->WriteHTML($htmlContent);
 
         return $mpdf->Output('', 'S');
+    }
+
+    public function update_contract_term_order($id, array $data)
+    {
+        $newOrder = $data['order'];
+        return DB::transaction(function () use ($id, $newOrder) {
+            $term = $this->contractTermRepository->find($id);
+            $oldOrder = $term->order;
+
+            if ($oldOrder != $newOrder) {
+                $this->contractTermRepository->shift_orders_for_update($oldOrder, $newOrder);
+                $this->contractTermRepository->update($id, ['order' => $newOrder]);
+            }
+            
+            return $term;
+        });
     }
 }

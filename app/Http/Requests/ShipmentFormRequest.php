@@ -29,7 +29,6 @@ class ShipmentFormRequest extends FormRequest
             'width' => 'required|numeric|gt:0',
             'length' => 'required|numeric|gt:0',
             'object' => ['required', 'string', 'max:255', new NoHtml],
-            'insurance' => 'required|boolean',
             'start_position_lat' => 'required|numeric',
             'start_position_lng' => 'required|numeric',
             'end_position_lat' => 'required|numeric',
@@ -43,7 +42,6 @@ class ShipmentFormRequest extends FormRequest
             'width' => 'sometimes|numeric|gt:0',
             'length' => 'sometimes|numeric|gt:0',
             'object' => ['sometimes', 'string', 'max:255', new NoHtml],
-            'insurance' => 'sometimes|boolean',
             'start_position_lat' => 'sometimes|numeric',
             'start_position_lng' => 'sometimes|numeric',
             'end_position_lat' => 'sometimes|numeric',
@@ -103,9 +101,6 @@ class ShipmentFormRequest extends FormRequest
                 'object.string' => 'وصف الشحنة يجب أن يكون نصاً',
                 'object.max' => 'وصف الشحنة يجب ألا يتجاوز 255 حرفاً',
 
-                'insurance.required' => 'حقل التأمين مطلوب',
-                'insurance.boolean' => 'قيمة التأمين يجب أن تكون صحيحة أو خاطئة',
-
                 'start_position_lat.required' => 'إحداثيات خط العرض لنقطة البداية مطلوبة',
                 'start_position_lat.numeric' => 'خط العرض لنقطة البداية يجب أن يكون رقماً',
 
@@ -131,8 +126,6 @@ class ShipmentFormRequest extends FormRequest
                 'length.gt' => 'يجب أن يكون الطول أكبر من 0',
 
                 'object.max' => 'وصف الشحنة يجب ألا يتجاوز 255 حرفاً',
-
-                'insurance.boolean' => 'قيمة التأمين يجب أن تكون صحيحة أو خاطئة',
 
                 'start_position_lat.numeric' => 'خط العرض لنقطة البداية يجب أن يكون رقماً',
                 'start_position_lng.numeric' => 'خط الطول لنقطة البداية يجب أن يكون رقماً',

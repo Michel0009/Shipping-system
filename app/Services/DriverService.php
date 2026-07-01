@@ -564,6 +564,12 @@ class DriverService
     {
         return $this->driverRepository->get_badges();
     }
+
+    public function edit_badge($id, array $data)
+    {      
+        return $this->driverRepository->update_badge($id, ['continuous_successful_shipments_condition' => $data['continuous_successful_shipments_condition']]);
+    }
+
     public function get_blocked_drivers()
     {
         return $this->driverRepository->get_blocked_drivers();

@@ -410,7 +410,7 @@ class ShipmentService
             ];
         }
 
-        if ($shipment->status !== 'قيد التوصيل' && $shipment->status !== 'جارية') {
+        if ($shipment->status !== 'قيد التوصيل') {
             return [
                 'message' => "لا يمكن تأكيد الاستلام في هذه الحالة",
                 'status_code' => 401

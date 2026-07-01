@@ -26,4 +26,39 @@ class ContractTermRepository
     {
         return $this->contractTerm->where('id', $id)->delete();
     }
+
+    public function find($id)
+    {
+        return $this->contractTerm->findOrFail($id);
+    }
+
+    public function update($id, array $data)
+    {
+        $term = $this->contractTerm->find($id);
+        $term->update($data);
+        return $term;
+    }
+
+    public function shift_orders_for_creation($newOrder)
+    {
+        $this->contractTerm->where('order', '>=', $newOrder)->increment('order');
+    }
+
+    public function shift_orders_for_update($oldOrder, $newOrder)
+    {
+        if ($newOrder < $oldOrder) {
+            $this->contractTerm->where('order', '>=', $newOrder)
+                               ->where('order', '<', $oldOrder)
+                               ->increment('order');
+        } elseif ($newOrder > $oldOrder) {
+            $this->contractTerm->where('order', '>', $oldOrder)
+                               ->where('order', '<=', $newOrder)
+                               ->decrement('order');
+        }
+    }
+
+    public function shift_orders_for_deletion($deletedOrder)
+    {
+        $this->contractTerm->where('order', '>', $deletedOrder)->decrement('order');
+    }
 }

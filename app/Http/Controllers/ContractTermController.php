@@ -37,6 +37,16 @@ class ContractTermController extends Controller
             'message' => 'تم حذف هذا البند من العقد',
         ]);
     }
+
+    public function update_contract_term_order(ContractTermFormRequest $request, $id)
+    {
+        $this->contractTermService->update_contract_term_order($id, $request->validated());
+
+        return response()->json([
+            'message' => 'تم تعديل ترتيب البند بنجاح',
+        ]);
+    }
+
     public function create_driver_contract(ContractTermFormRequest $request)
     {
         $result = $this->contractTermService->create_driver_contract($request->validated());

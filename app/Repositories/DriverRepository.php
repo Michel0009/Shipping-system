@@ -250,6 +250,13 @@ class DriverRepository
         return Badge::get();
     }
 
+    public function update_badge($id, array $data)
+    {
+        $badge = Badge::findOrFail($id);
+        $badge->update($data);
+        return $badge;
+    }
+
     public function get_driver_with_vehicle_and_governorates($userId)
     {
         return $this->driver->where('user_id', $userId)

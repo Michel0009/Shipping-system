@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Events\DriverLocationUpdated;
 
 class DriverService
 {
@@ -528,6 +529,16 @@ class DriverService
             'lng' => $data['lng']
         ], now()->addHours(1));
 
+        broadcast(new DriverLocationUpdated(
+            driverId: $driver->id,
+            first_name: $driver->user->first_name,
+            last_name: $driver->user->last_name,
+            phone_number: $driver->user->phone_number,
+            lat: $data['lat'],
+            lng: $data['lng'],
+            updatedAt: now()->toISOString(),
+        ));
+
         return true;
     }
 
@@ -568,5 +579,22 @@ class DriverService
     public function get_blocked_drivers()
     {
         return $this->driverRepository->get_blocked_drivers();
+    }
+    public function get_all_drivers_locations(): array
+    {
+        $drivers = $this->driverRepository->get_all_drivers();
+
+        return $drivers->map(function ($driver) {
+            $cached = Cache::get("location_driver_{$driver->id}");
+
+            return [
+                'driver_id'  => $driver->id,
+                'first_name' => $driver->user->first_name,
+                'last_name'  => $driver->user->last_name,
+                'phone_number'      => $driver->user->phone_number,
+                'lat'        => $cached['lat']        ?? null,
+                'lng'        => $cached['lng']        ?? null,
+            ];
+        })->toArray();
     }
 }

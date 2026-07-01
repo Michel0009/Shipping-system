@@ -12,6 +12,7 @@ use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleTypeController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::post('/register', [AuthController::class, 'user_Register']);
 Route::post('/sendEmail', [AuthController::class, 'send_email']);
@@ -24,7 +25,7 @@ Route::post('/refreshToken', [AuthController::class, 'refresh']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
-
+    Broadcast::routes();
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/governorates', [DriverController::class, 'governorates']);
     Route::get('/profile', [UserController::class, 'get_profile']);
@@ -104,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/statistics', [StatisticsController::class, 'get_statistics']);
         Route::get('/generalStatistics', [StatisticsController::class, 'get_general_statistics']);
         Route::post('/exportStatisticsPdf', [StatisticsController::class, 'export_statistics_pdf']);
+        Route::get('/drivers/locations', [DriverController::class, 'get_all_drivers_locations']);
     });
 
     // Employee-Admin Routes

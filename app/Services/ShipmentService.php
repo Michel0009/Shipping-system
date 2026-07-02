@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ShipmentService
 {
@@ -28,6 +29,14 @@ class ShipmentService
 
     public function create_shipment(array $data)
     {
+        $suitableVehicles = app(\App\Repositories\CarRepository::class)->get_suitable_vehicles($data);
+        
+        if ($suitableVehicles->isEmpty()) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'هذه الأبعاد والأوزان لا تتناسب مع أي نوع من المركبات في النظام يمكنك التحقق من أنواع المركبات ضمن الواجهة المخصصة لعرضهم.'
+            ], 422));
+        }
+
         $user = Auth::user();
         $cacheKey = "shipment_request_user_" . $user->id;
         $expiresAt = now()->addHour();

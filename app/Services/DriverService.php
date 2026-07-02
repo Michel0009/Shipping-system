@@ -147,9 +147,7 @@ class DriverService
             $weightFactor = $w < 50 ? 1 : ($w < 200 ? 1.2 : 1.5);
             $price *= $weightFactor;
 
-            // if ($shipment['insurance']) {
-            //     $price += $price * $insuranceRate;
-            // }
+            $price *= 1.5;
 
             // Rates
             $rating = round($driver->reviews->avg('rate'), 2);

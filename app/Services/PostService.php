@@ -7,6 +7,7 @@ use App\Repositories\DriverRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,11 @@ class PostService
             );
 
             $suitableVehicles = $this->carRepository->get_suitable_vehicles($data);
+            if ($suitableVehicles->isEmpty()) {
+                throw new HttpResponseException(response()->json([
+                    'message' => 'هذه الأبعاد والأوزان لا تتناسب مع أي نوع من المركبات في النظام يمكنك التحقق من أنواع المركبات ضمن الواجهة المخصصة لعرضهم.'
+                ], 422));
+            }
 
             $fuelPrices = $this->carRepository->get_fuel_prices();
             $coeffs = $this->carRepository->get_coefficients_calculation();
@@ -64,10 +70,20 @@ class PostService
             
             $maxPrice = ($maxBaseFare + $distanceCost + ($distance * $maxCons * $maxFuel)) * $maxVehCoeff * $weightFactor;
 
-            // if ($data['insurance']) {
-            //     $minPrice *= (1 + $insuranceRate);
-            //     $maxPrice *= (1 + $insuranceRate);
-            // }
+            if (isset($data['last_date'])) {
+                $today = Carbon::now()->startOfDay();
+                $lastDate = Carbon::parse($data['last_date'])->startOfDay();
+                
+                $daysDifference = $today->diffInDays($lastDate, false);
+
+                if ($daysDifference <= 1) {
+                    $maxPrice *= 3;
+                } elseif ($daysDifference <= 3) {
+                    $maxPrice *= 2;
+                } elseif ($daysDifference <= 5) {
+                    $maxPrice *= 1.5;
+                }
+            }
 
             $data['min_price'] = round($minPrice);
             $data['max_price'] = round($maxPrice);

@@ -68,6 +68,8 @@ class AuthController extends Controller
             return response()->json($response);
         }
         // Web
+        $response['role'] = $success['role'] ?? null;
+
         $minutes = $remember ? 60 * 24 * 30 : 60 * 24;
 
         $cookie = cookie(

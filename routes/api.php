@@ -97,7 +97,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/unblockUser/{id}', [UserController::class, 'unblock']);
 
         Route::post('/contractTerm/create', [ContractTermController::class, 'create_contract_term']);
-        Route::get('/contractTerms', [ContractTermController::class, 'get_contract_terms']);
         Route::delete('/contractTerm/{id}', [ContractTermController::class, 'delete_contract_term']);
         Route::put('/contractTermOrder/{id}', [ContractTermController::class, 'update_contract_term_order']);
 
@@ -109,7 +108,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/statistics', [StatisticsController::class, 'get_statistics']);
         Route::get('/generalStatistics', [StatisticsController::class, 'get_general_statistics']);
         Route::post('/exportStatisticsPdf', [StatisticsController::class, 'export_statistics_pdf']);
-        Route::get('/drivers/locations', [DriverController::class, 'get_all_drivers_locations']);
     });
 
     // Employee-Admin Routes
@@ -135,8 +133,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users', [UserController::class, 'get_users']);
         Route::post('/searchForUser', [UserController::class, 'search_for_user']);
         Route::get('/userDetails/{id}', [UserController::class, 'get_user_details_for_admin']);
+        Route::get('/contractTerms', [ContractTermController::class, 'get_contract_terms']);
         Route::post('/createDriverContract', [ContractTermController::class, 'create_driver_contract']);
-
+        Route::get('/drivers/locations', [DriverController::class, 'get_all_drivers_locations']);
     });
 
     // Client-Driver Routes

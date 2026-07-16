@@ -24,5 +24,5 @@ Broadcast::channel('admin-tracking', function ($user) {
         'time'    => now()->toISOString(),
     ]);
 
-    return $user->role?->name === 'admin';
+    return in_array($user->role?->name, ['admin', 'employee']);
 });

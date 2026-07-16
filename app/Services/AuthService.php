@@ -123,7 +123,7 @@ class AuthService
         }
 
         return ['token' => $token, 'refresh_token' => $refreshToken,
-                  'user_id' => $user->id, 'driver_id' => $driver_id];
+                  'user_id' => $user->id, 'driver_id' => $driver_id,'role'=>$user->role->name];
       }
       return true;
 

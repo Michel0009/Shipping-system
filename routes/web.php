@@ -23,6 +23,6 @@ Route::get('/test/get-driver-location/{id}', function ($id) {
     return Cache::get("location_driver_{$id}");
 });
 
-Route::get('test/clear_entire_cache', function () {
-    return Cache::flush();
+Route::get('test/clear-cache', function () {
+    return Cache::forget('shipment_route_4');
 });

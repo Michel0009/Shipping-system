@@ -150,4 +150,10 @@ class DriverController extends Controller
         $result = $this->driverService->get_blocked_drivers();
         return response()->json($result);
     }
+    public function get_all_drivers_locations()
+    {
+        $locations = $this->driverService->get_all_drivers_locations();
+
+        return response()->json(['drivers' => $locations]);
+    }
 }

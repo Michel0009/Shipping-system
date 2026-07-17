@@ -1,7 +1,28 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
+/*
+|--------------------------------------------------------------------------
+| Broadcast Channels
+|--------------------------------------------------------------------------
+|
+| Here you may register all of the event broadcasting channels that your
+| application supports. The given channel authorization callbacks are
+| used to check if an authenticated user can listen to the channel.
+|
+*/
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
+});
+
+Broadcast::channel('admin-tracking', function ($user) {
+    Log::channel('daily')->info('Channel auth attempt for admin-tracking', [
+        'user_id' => $user->id,
+        'role'    => $user->role,
+        'time'    => now()->toISOString(),
+    ]);
+
+    return in_array($user->role?->name, ['admin', 'employee']);
 });

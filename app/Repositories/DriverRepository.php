@@ -294,4 +294,8 @@ class DriverRepository
     {
         return Badge::where('level', $level)->first();
     }
+    public function get_all_drivers()
+    {
+        return $this->driver->where('availability', true)->select('id', 'user_id')->with('user:id,first_name,last_name,phone_number')->get();
+    }
 }

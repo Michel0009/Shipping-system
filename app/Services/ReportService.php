@@ -54,6 +54,14 @@ class ReportService
       app(\App\Services\NotificationService::class)->send_notification(
           $data['user_id'], $data['warning_text'], 0, 'تنبيه تحذيري', []
       );
+
+      $user = $this->userRepository->find_user($data['user_id']);
+      if ($user->role_id == 4){
+        $driverRepository = app(\App\Repositories\DriverRepository::class);
+        $driver = $driverRepository->find_by_user_ID($user->id);
+        $driver->badge_shipments_counter = 0;
+        $driverRepository->save($driver);
+      }
   }
 
   public function get_user_warnings($user_id)

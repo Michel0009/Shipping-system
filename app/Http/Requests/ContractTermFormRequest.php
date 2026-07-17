@@ -25,7 +25,7 @@ class ContractTermFormRequest extends FormRequest
         return match ($this->route()->getActionMethod()) {
 
             'create_contract_term' => [
-                'order' => 'required|numeric',
+                'order' => 'required|numeric|min:0',
                 'term_text' => ['required', 'string', new NoHtml],
             ],
             'create_driver_contract' => [
@@ -44,7 +44,7 @@ class ContractTermFormRequest extends FormRequest
                 'grant_date'       => 'required|string|max:50',
             ],
             'update_contract_term_order' => [
-                'order' => 'required|numeric',
+                'order' => 'required|numeric|min:0',
             ],
             default => [],
         };
@@ -77,6 +77,7 @@ class ContractTermFormRequest extends FormRequest
             'create_contract_term' => [
                 'order.required' => 'ترتيب البند مطلوب',
                 'order.numeric' => 'ترتيب البند يجب أن يكون رقماً',
+                'order.min' => 'ترتيب البند يجب أن أكبر من الصفر',
 
                 'term_text.required' => 'البند مطلوب',
                 'term_text.string' => 'البند يجب أن يكون نصاً',
@@ -89,6 +90,7 @@ class ContractTermFormRequest extends FormRequest
             'update_contract_term_order' => [
                 'order.required' => 'ترتيب البند مطلوب',
                 'order.numeric' => 'ترتيب البند يجب أن يكون رقماً',
+                'order.min' => 'ترتيب البند يجب أن أكبر من الصفر',
             ],
             default => [],
         };

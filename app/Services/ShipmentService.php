@@ -680,8 +680,21 @@ class ShipmentService
             $create = $this->driverRepository->create_reward($reward);
             $driver->continuous_successful_shipments = 0;
             $this->driverRepository->save($driver);
-
         }
+
+        $driver->badge_shipments_counter = $driver->badge_shipments_counter + 1;
+        $badge = $this->driverRepository->get_badge_for_driver($driver);
+        if($badge->level !== 3){
+            $next_badge = $badge->level + 1;
+            $badge = $this->driverRepository->get_badge_by_level($next_badge);
+
+            if ($driver->badge_shipments_counter >= $badge->continuous_successful_shipments_condition)
+            {
+                $driver->badge_id = $badge->id;
+                $driver->badge_shipments_counter = 0;
+            }
+        }
+        $this->driverRepository->save($driver);
     }
 
 }

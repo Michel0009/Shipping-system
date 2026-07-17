@@ -23,6 +23,7 @@ class Driver extends Model
         'personal_picture',
         'nationality',
         'continuous_successful_shipments',
+        'badge_shipments_counter',
         'version'
     ];
     public function user()

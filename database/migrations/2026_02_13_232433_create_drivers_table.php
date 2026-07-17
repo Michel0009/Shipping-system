@@ -35,6 +35,7 @@ return new class extends Migration
             $table->string('personal_picture');
             $table->string('nationality');
             $table->unsignedInteger('continuous_successful_shipments')->default(0);
+            $table->unsignedInteger('badge_shipments_counter')->default(0);
             $table->boolean('availability')->default(false);
             $table->unsignedInteger('version')->default(1);
             $table->timestamps();

@@ -285,4 +285,13 @@ class DriverRepository
             ];
         });
     }
+
+    public function get_badge_for_driver($driver)
+    {
+        return Badge::where('id', $driver->badge_id)->first();
+    }
+    public function get_badge_by_level($level)
+    {
+        return Badge::where('level', $level)->first();
+    }
 }

@@ -540,6 +540,13 @@ class UserService
                 $user->driver->availability = false;
                 $this->driverRepository->save($user->driver);
             }
+            $driver = $this->driverRepository->find_by_user_ID($user->id);
+            $driver->badge_shipments_counter = 0;
+            $badge = $this->driverRepository->get_badge_for_driver($driver);
+            if($badge->level !== 0){
+                $driver->badge_id = $driver->badge_id - 1;
+            }
+            $this->driverRepository->save($driver);
         }
         $end_date = isset($data['days_number'])
             ? today()->addDays((int) $data['days_number'])

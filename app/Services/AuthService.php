@@ -185,6 +185,7 @@ class AuthService
     if ($user && Hash::check($request['password'], $user->password)) {
 
       if ($user['role_id'] != 4 && $user['email_verified_at'] == null) {
+        $this->send_email($user->email);
         return 'unverified';
       }
       if ($user['status'] == 3) {

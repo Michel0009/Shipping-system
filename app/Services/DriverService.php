@@ -509,10 +509,12 @@ class DriverService
 
         $user = Auth::user();
         $driver = $this->driverRepository->find_by_user_ID($user->id);
+        $coefficient = $this->carRepository->get_coefficients_reward();
 
         return [
             'count' => $driver->continuous_successful_shipments,
             'availability' => $driver->availability,
+            'reward' => $coefficient['value'],
         ];
     }
 
